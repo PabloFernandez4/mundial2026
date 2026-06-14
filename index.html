@@ -180,12 +180,28 @@ async function toggleLock() {
   await guardarManual();
 }
 
+function normalizeElim(val) {
+  if(!val) return '';
+  if(val === 'EMPATE_L') return 'LOCAL';
+  if(val === 'EMPATE_V') return 'VISITANTE';
+  return val;
+}
+
 async function loadAll(){ 
   try { 
     const res = await fetch(API_URL); 
     const text = await res.text();
     try {
       allData = JSON.parse(text);
+      // Migrate old EMPATE_L/EMPATE_V to LOCAL/VISITANTE
+      Object.keys(allData).forEach(user => {
+        if(user === '_ADMIN_') return;
+        const elim = allData[user]?.elim;
+        if(elim) Object.keys(elim).forEach(c => {
+          if(elim[c] === 'EMPATE_L') elim[c] = 'LOCAL';
+          if(elim[c] === 'EMPATE_V') elim[c] = 'VISITANTE';
+        });
+      });
     } catch(e) {
       console.error('Error parseando JSON de BD:', text.substring(0,200));
       allData = {};
@@ -348,8 +364,8 @@ function getTeamName(code, st) {
      const sel = allData[jugador]?.elim?.[matchCode];
      if(!sel) return code.startsWith('G') ? `Gan. ${matchCode}` : `Perd. ${matchCode}`;
      
-     const isLocalWin = sel.startsWith('LOCAL') || sel === 'EMPATE_L';
-     const isVisitWin = sel.startsWith('VISITANTE') || sel === 'EMPATE_V';
+     const isLocalWin = sel === 'LOCAL' || sel === 'EMPATE_L';
+     const isVisitWin = sel === 'VISITANTE' || sel === 'EMPATE_V';
      
      if(code.startsWith('G')) {
         if(isLocalWin) return t1;
@@ -388,15 +404,15 @@ function renderElim() {
   m3Cont.innerHTML = hM3 + `</div>`;
   comprobarM3(); 
 
-  // TAB 2: CRUCES (L / E / V)
+  // TAB 2: CRUCES (L / V)
   const bCont = document.getElementById('bracket-cont');
-  let hB = `<div class="card"><p style="font-size:12px;color:#555;margin-bottom:10px;">Los equipos se han rellenado automáticamente según tus pronósticos. Si marcas Empate (E), indica quién gana por penaltis.</p></div>`;
+  let hB = `<div class="card"><p style="font-size:12px;color:#555;margin-bottom:10px;">Los equipos se han rellenado automáticamente según tus pronósticos. Indica quién pasa de ronda.</p></div>`;
   
   ELIM.forEach(r => {
     hB += `<span class="jornada-sep">${r.n}</span>`;
     r.p.forEach(p => {
       const sel = allData[jugador]?.elim?.[p.c] || '';
-      const bg = sel.startsWith('LOCAL') ? '#e8f5ee' : sel.startsWith('EMPATE') ? '#fff8e1' : sel.startsWith('VISITANTE') ? '#fde8e8' : '#fff';
+      const bg = sel === 'LOCAL' ? '#e8f5ee' : sel === 'VISITANTE' ? '#fde8e8' : '#fff';
       const t1 = getTeamName(p.e1, st);
       const t2 = getTeamName(p.e2, st);
       const disabled = isLocked() ? 'disabled' : '';
@@ -408,8 +424,6 @@ function renderElim() {
                   <select id="elim-sel-${p.c}" onchange="setElim(${p.c}, this.value)" style="background:${bg}" ${disabled}>
                     <option value="">(Elige)</option>
                     <option value="LOCAL" ${sel==='LOCAL'?'selected':''}>L (Pasa Local)</option>
-                    <option value="EMPATE_L" ${sel==='EMPATE_L'?'selected':''}>E (Pasa Local)</option>
-                    <option value="EMPATE_V" ${sel==='EMPATE_V'?'selected':''}>E (Pasa Visit)</option>
                     <option value="VISITANTE" ${sel==='VISITANTE'?'selected':''}>V (Pasa Visit)</option>
                   </select>
                   <div class="t-v">${t2}</div>
@@ -570,7 +584,9 @@ function renderClasif() {
       if(data.pron[c] && adminData.rr[c] && adminData.rr[c] === data.pron[c]) pGrupos += 1;
     });
     if(data.elim) Object.keys(data.elim).forEach(c => {
-      if(data.elim[c] && adminData.elim[c] && adminData.elim[c] === data.elim[c]) pElim += 2;
+      const userVal = normalizeElim(data.elim[c]);
+      const adminVal = normalizeElim(adminData.elim[c]);
+      if(userVal && adminVal && userVal === adminVal) pElim += 2;
     });
     return { user, pGrupos, pElim, total: pGrupos + pElim };
   }).sort((a,b) => b.total - a.total);
@@ -672,10 +688,8 @@ function renderAdmin() {
         html += `<div class="partido" style="grid-template-columns:1fr 100px 1fr;"><div class="t-l">Partido #${p.c}</div>
                  <select onchange="setAdminElim(${p.c}, this.value)">
                    <option value="">-</option>
-                   <option value="LOCAL" ${val==='LOCAL'?'selected':''}>L</option>
-                   <option value="EMPATE_L" ${val==='EMPATE_L'?'selected':''}>E (Pasa L)</option>
-                   <option value="EMPATE_V" ${val==='EMPATE_V'?'selected':''}>E (Pasa V)</option>
-                   <option value="VISITANTE" ${val==='VISITANTE'?'selected':''}>V</option>
+                   <option value="LOCAL" ${val==='LOCAL'?'selected':''}>L (Pasa Local)</option>
+                   <option value="VISITANTE" ${val==='VISITANTE'?'selected':''}>V (Pasa Visit)</option>
                  </select>
                  <div class="t-v"></div></div>`;
      });
@@ -814,7 +828,11 @@ function renderComparativa() {
   players.forEach(p => {
     let pts = 0;
     rrCodes.forEach(c => { if(allData[p]?.pron?.[c] && allData[p].pron[c] === adminData.rr[c]) pts += 1; });
-    elimCodes.forEach(c => { if(allData[p]?.elim?.[c] && allData[p].elim[c] === adminData.elim[c]) pts += 2; });
+    elimCodes.forEach(c => { 
+      const uv = normalizeElim(allData[p]?.elim?.[c]);
+      const av = normalizeElim(adminData.elim[c]);
+      if(uv && av && uv === av) pts += 2; 
+    });
     html += `<td style="font-weight:700;font-size:13px;">${pts}</td>`;
   });
   html += `</tr></tbody></table></div>`;

@@ -151,6 +151,103 @@ const FASES_ELIM = [
   {id:'fin', n:'Final y 3er Puesto', partidos: [103,104]},
 ];
 
+// Bracket progression: each match feeds into the next round
+// Based on official WC2026 bracket structure
+const ELIM_INFO = {
+  73:  {fecha:'28 jun', sede:'SoFi Stadium, Los Ángeles'},
+  74:  {fecha:'29 jun', sede:'Gillette Stadium, Boston'},
+  75:  {fecha:'29 jun', sede:'Estadio Monterrey, Monterrey'},
+  76:  {fecha:'29 jun', sede:'NRG Stadium, Houston'},
+  77:  {fecha:'30 jun', sede:'MetLife Stadium, Nueva York/NJ'},
+  78:  {fecha:'30 jun', sede:'AT&T Stadium, Dallas'},
+  79:  {fecha:'30 jun', sede:'Estadio Azteca, Ciudad de México'},
+  80:  {fecha:'1 jul',  sede:'Mercedes-Benz Stadium, Atlanta'},
+  81:  {fecha:'1 jul',  sede:'Levi\'s Stadium, San Francisco'},
+  82:  {fecha:'1 jul',  sede:'Lumen Field, Seattle'},
+  83:  {fecha:'2 jul',  sede:'Estadio Nacional, Toronto'},
+  84:  {fecha:'2 jul',  sede:'SoFi Stadium, Los Ángeles'},
+  85:  {fecha:'2 jul',  sede:'BC Place, Vancouver'},
+  86:  {fecha:'3 jul',  sede:'Hard Rock Stadium, Miami'},
+  87:  {fecha:'3 jul',  sede:'Arrowhead Stadium, Kansas City'},
+  88:  {fecha:'3 jul',  sede:'AT&T Stadium, Dallas'},
+  89:  {fecha:'4 jul',  sede:'Filadelfia'},
+  90:  {fecha:'4 jul',  sede:'Houston'},
+  91:  {fecha:'5 jul',  sede:'Nueva York/NJ'},
+  92:  {fecha:'5 jul',  sede:'Ciudad de México'},
+  93:  {fecha:'6 jul',  sede:'Dallas'},
+  94:  {fecha:'6 jul',  sede:'Seattle'},
+  95:  {fecha:'7 jul',  sede:'Atlanta'},
+  96:  {fecha:'7 jul',  sede:'Vancouver'},
+  97:  {fecha:'9 jul',  sede:'Boston'},
+  98:  {fecha:'10 jul', sede:'Los Ángeles'},
+  99:  {fecha:'11 jul', sede:'Miami'},
+  100: {fecha:'11 jul', sede:'Kansas City'},
+  101: {fecha:'14 jul', sede:'Dallas'},
+  102: {fecha:'15 jul', sede:'Atlanta'},
+  103: {fecha:'18 jul', sede:'Miami'},
+  104: {fecha:'19 jul', sede:'Nueva York/NJ'},
+};
+  // Octavos (89-96) fed by dieciseisavos (73-88)
+  89: {e1: 74, e2: 77},   // G74 vs G77
+  90: {e1: 73, e2: 75},   // G73 vs G75
+  91: {e1: 76, e2: 78},   // G76 vs G78
+  92: {e1: 79, e2: 80},   // G79 vs G80
+  93: {e1: 83, e2: 84},   // G83 vs G84
+  94: {e1: 81, e2: 82},   // G81 vs G82
+  95: {e1: 86, e2: 88},   // G86 vs G88
+  96: {e1: 85, e2: 87},   // G85 vs G87
+  // Cuartos (97-100) fed by octavos (89-96)
+  97: {e1: 89, e2: 90},
+  98: {e1: 93, e2: 94},
+  99: {e1: 91, e2: 92},
+  100: {e1: 95, e2: 96},
+  // Semis (101-102) fed by cuartos (97-100)
+  101: {e1: 97, e2: 98},
+  102: {e1: 99, e2: 100},
+  // Final (104) and 3rd place (103) fed by semis
+  103: {e1: 101, e2: 102, losers: true}, // perdedores semis
+  104: {e1: 101, e2: 102},               // ganadores semis
+};
+
+// Get the team name a user has picked to win from a given match
+function getWinnerFromUserElim(matchNum) {
+  const sel = allData[jugador]?.elim?.[matchNum];
+  if(!sel) return null;
+  const match = getMatchTeams(matchNum);
+  if(!match) return null;
+  return sel === 'LOCAL' ? match.local : match.visita;
+}
+
+function getLoserFromUserElim(matchNum) {
+  const sel = allData[jugador]?.elim?.[matchNum];
+  if(!sel) return null;
+  const match = getMatchTeams(matchNum);
+  if(!match) return null;
+  return sel === 'LOCAL' ? match.visita : match.local;
+}
+
+// Recursively get match teams — either from admin (d16) or computed from user picks
+function getMatchTeams(c) {
+  // Dieciseisavos: teams come from admin
+  if(c >= 73 && c <= 88) {
+    const m = allData["_ADMIN_"]?.elimMatches?.[c];
+    return m?.local && m?.visita ? m : null;
+  }
+  // Later rounds: compute from bracket feed
+  const feed = BRACKET_FEED[c];
+  if(!feed) return null;
+  let local, visita;
+  if(feed.losers) {
+    local = getLoserFromUserElim(feed.e1);
+    visita = getLoserFromUserElim(feed.e2);
+  } else {
+    local = getWinnerFromUserElim(feed.e1);
+    visita = getWinnerFromUserElim(feed.e2);
+  }
+  if(!local || !visita) return null;
+  return {local, visita};
+}
+
 // Helper: get real match info from _ADMIN_.elimMatches
 function getElimMatch(c) {
   return allData["_ADMIN_"]?.elimMatches?.[c] || null;
@@ -408,7 +505,10 @@ function renderElim() {
   const faseActiva = allData["_ADMIN_"]?.faseActiva || null;
   const bCont = document.getElementById('bracket-cont');
 
-  if(!faseActiva) {
+  // Check if admin has defined at least one d16 match
+  const hasD16 = Object.keys(elimMatches).some(c => parseInt(c) >= 73 && parseInt(c) <= 88 && elimMatches[c].local && elimMatches[c].visita);
+
+  if(!faseActiva || !hasD16) {
     bCont.innerHTML = `<div class="card" style="text-align:center;padding:30px;color:#888;">
       <div style="font-size:40px;margin-bottom:10px;">⏳</div>
       <p style="font-weight:600;">La fase eliminatoria aún no ha comenzado.</p>
@@ -418,44 +518,57 @@ function renderElim() {
   }
 
   let hB = '';
-  FASES_ELIM.forEach(fase => {
-    const faseIdx = FASES_ELIM.findIndex(f => f.id === faseActiva);
-    const thisFaseIdx = FASES_ELIM.findIndex(f => f.id === fase.id);
-    if(thisFaseIdx > faseIdx) return; // fase no desbloqueada aún
+  const userElim = allData[jugador]?.elim || {};
+  const locked = isLocked();
 
-    hB += `<span class="jornada-sep">${fase.n}</span>`;
+  FASES_ELIM.forEach(fase => {
+    let faseHTML = '';
+    let anyMatchAvailable = false;
 
     fase.partidos.forEach(c => {
-      const match = elimMatches[c];
-      if(!match) return; // cruce no definido aún
+      const match = getMatchTeams(c);
+      if(!match) return; // teams not determined yet
 
-      const sel = allData[jugador]?.elim?.[c] || '';
-      const bg = sel === 'LOCAL' ? '#e8f5ee' : sel === 'VISITANTE' ? '#fde8e8' : '#fff';
+      anyMatchAvailable = true;
+      const sel = userElim[c] || '';
+      const bgLocal = sel === 'LOCAL' ? '#e8f5ee' : '#fff';
+      const bgVisit = sel === 'VISITANTE' ? '#fde8e8' : '#fff';
       const resultado = elimResults[c];
-      const cerrado = thisFaseIdx < faseIdx; // fase anterior = cerrada
-      const disabled = (isLocked() || cerrado) ? 'disabled' : '';
-      const resultadoBadge = resultado ? 
-        `<div style="font-size:10px;text-align:center;margin-top:4px;">
-          Resultado: <span class="res-badge ${resultado==='LOCAL'?'res-L':'res-V'}">${resultado==='LOCAL'?match.local:match.visita} ✓</span>
+      const disabled = locked ? 'disabled' : '';
+      const info = ELIM_INFO[c] || {};
+
+      // Show result badge if admin has entered result
+      const resultBadge = resultado ?
+        `<div style="font-size:10px;text-align:center;margin-top:4px;color:#666;">
+          ✅ Ganó: <strong style="color:${resultado==='LOCAL'?'#1a7a4a':'#c0392b'}">${resultado==='LOCAL'?match.local:match.visita}</strong>
         </div>` : '';
 
-      hB += `<div class="card" style="padding:10px;margin-bottom:10px;${cerrado&&resultado?'opacity:0.8':''}">
-        <div style="text-align:center;font-size:10px;color:#999;margin-bottom:5px;">Partido #${c}</div>
-        <div class="partido" style="grid-template-columns:1fr 110px 1fr;border:none;padding:0;">
-          <div class="t-l" style="${resultado==='LOCAL'?'color:var(--green);font-weight:800;':''}">${match.local}</div>
-          <select id="elim-sel-${c}" onchange="setElim(${c}, this.value)" style="background:${bg}" ${disabled}>
-            <option value="">(Elige)</option>
-            <option value="LOCAL" ${sel==='LOCAL'?'selected':''}>🏠 ${match.local}</option>
-            <option value="VISITANTE" ${sel==='VISITANTE'?'selected':''}>✈️ ${match.visita}</option>
-          </select>
-          <div class="t-v" style="${resultado==='VISITANTE'?'color:#c0392b;font-weight:800;':''}">${match.visita}</div>
+      faseHTML += `<div class="card" style="padding:10px;margin-bottom:8px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+          <span style="font-size:10px;color:#999;font-weight:600;">Partido #${c}</span>
+          <span style="font-size:10px;color:#aaa;">📅 ${info.fecha||''} · 📍 ${info.sede||''}</span>
         </div>
-        ${resultadoBadge}
+        <div style="display:grid;grid-template-columns:1fr 24px 1fr;gap:4px;align-items:center;">
+          <button onclick="pickWinner(${c},'LOCAL')" ${disabled}
+            style="padding:8px 4px;border-radius:8px;border:2px solid ${sel==='LOCAL'?'#1a7a4a':'#ddd'};background:${bgLocal};font-size:11px;font-weight:${sel==='LOCAL'?'800':'500'};cursor:pointer;transition:all 0.15s;">
+            ${match.local}
+          </button>
+          <div style="text-align:center;font-size:10px;color:#aaa;font-weight:700;">vs</div>
+          <button onclick="pickWinner(${c},'VISITANTE')" ${disabled}
+            style="padding:8px 4px;border-radius:8px;border:2px solid ${sel==='VISITANTE'?'#c0392b':'#ddd'};background:${bgVisit};font-size:11px;font-weight:${sel==='VISITANTE'?'800':'500'};cursor:pointer;transition:all 0.15s;">
+            ${match.visita}
+          </button>
+        </div>
+        ${resultBadge}
       </div>`;
     });
+
+    if(anyMatchAvailable) {
+      hB += `<span class="jornada-sep">${fase.n}</span>${faseHTML}`;
+    }
   });
 
-  if(!hB) hB = `<div class="card" style="text-align:center;padding:20px;color:#888;"><p>No hay cruces definidos aún para esta fase.</p></div>`;
+  if(!hB) hB = `<div class="card" style="text-align:center;padding:20px;color:#888;"><p>Elige los ganadores de dieciseisavos para ver los siguientes cruces.</p></div>`;
   bCont.innerHTML = hB;
 }
 
@@ -469,11 +582,18 @@ function setPron(c,v) {
   if(el) el.style.background = v === 'LOCAL' ? '#e8f5ee' : v === 'EMPATE' ? '#fff8e1' : v === 'VISITANTE' ? '#fde8e8' : '#fff';
 }
 
+function pickWinner(c, val) {
+  if(!allData[jugador]) allData[jugador] = {pron:{}, elim:{}, m3:{}};
+  allData[jugador].elim[c] = val;
+  markDirty();
+  renderElim(); // re-render to show next round matches
+}
+
 function setElim(c,v) { 
   if(!allData[jugador]) allData[jugador]={pron:{},elim:{},m3:{}}; 
   allData[jugador].elim[c]=v; 
   markDirty();
-  renderElim(); // Rerender full bracket to pass winners forward
+  renderElim();
 }
 
 function setM3(k,v) { 
@@ -704,29 +824,31 @@ function renderAdmin() {
   // === NUEVA SECCIÓN: GESTIÓN ELIMINATORIAS ===
   html += `<h4 style="margin-top:20px;">🏆 Gestión Eliminatorias</h4>`;
 
-  // Fase activa selector
+  // Simple activate toggle
   const faseActiva = adminData.faseActiva || '';
-  html += `<div style="margin-bottom:15px;padding:12px;background:#f0f7f3;border-radius:8px;">
-    <label style="font-size:12px;font-weight:700;color:#555;display:block;margin-bottom:6px;">Fase activa (visible para jugadores):</label>
-    <select onchange="setFaseActiva(this.value)" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;font-size:13px;">
-      <option value="">— Eliminatorias cerradas —</option>`;
-  FASES_ELIM.forEach(f => {
-    html += `<option value="${f.id}" ${faseActiva===f.id?'selected':''}>${f.n}</option>`;
-  });
-  html += `</select></div>`;
+  const elimActivas = !!faseActiva;
+  html += `<div style="margin-bottom:15px;padding:12px;background:${elimActivas?'#e8f5ee':'#fff8e1'};border-radius:8px;border:1px solid ${elimActivas?'#a9d9bc':'#f0d080'};">
+    <div style="display:flex;align-items:center;justify-content:space-between;">
+      <span style="font-size:13px;font-weight:700;color:${elimActivas?'#1a5c34':'#7a5c00'};">${elimActivas?'🟢 Eliminatorias ACTIVAS':'🟡 Eliminatorias INACTIVAS'}</span>
+      <button onclick="toggleElimActivas()" class="btn" style="background:${elimActivas?'#c0392b':'#1a7a4a'};padding:6px 14px;font-size:12px;">
+        ${elimActivas?'Desactivar':'Activar'}
+      </button>
+    </div>
+    <p style="font-size:11px;color:#666;margin-top:6px;">Define los 16 cruces de dieciseisavos y activa. Los usuarios verán el bracket completo y podrán pronosticar.</p>
+  </div>`;
 
   // Cruces por fase
-  FASES_ELIM.forEach(fase => {
-    const faseIdx = FASES_ELIM.findIndex(f => f.id === faseActiva);
-    const thisFaseIdx = FASES_ELIM.findIndex(f => f.id === fase.id);
-    if(faseActiva && thisFaseIdx > faseIdx) return; // no mostrar fases futuras
-
+  FASES_ELIM.filter(f => f.id === 'd16').forEach(fase => {
     html += `<span class="jornada-sep">${fase.n}</span>`;
     fase.partidos.forEach(c => {
       const match = adminData.elimMatches[c] || {local:'', visita:''};
       const res = adminData.elim[c] || '';
+      const info = ELIM_INFO[c] || {};
       html += `<div style="border:1px solid #eee;border-radius:8px;padding:10px;margin-bottom:8px;">
-        <div style="font-size:10px;color:#999;margin-bottom:6px;font-weight:600;">Partido #${c}</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+          <span style="font-size:10px;color:#999;font-weight:600;">Partido #${c}</span>
+          <span style="font-size:10px;color:#aaa;">📅 ${info.fecha} · 📍 ${info.sede}</span>
+        </div>
         <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:6px;align-items:center;margin-bottom:8px;">
           ${teamSelectHTML(match.local, c, 'local')}
           <span style="font-size:11px;color:#999;font-weight:700;">vs</span>
@@ -744,12 +866,78 @@ function renderAdmin() {
     });
   });
 
+  // Resultados de rondas posteriores (octavos en adelante)
+  // Admin introduce resultados, equipos se muestran basados en resultados reales anteriores
+  if(elimActivas) {
+    const laterFases = FASES_ELIM.filter(f => f.id !== 'd16');
+    laterFases.forEach(fase => {
+      let faseHasMatches = false;
+      let faseHTML = '';
+      fase.partidos.forEach(c => {
+        const feed = BRACKET_FEED[c];
+        if(!feed) return;
+        // Get teams from admin results (not user picks)
+        const getAdminWinner = (matchNum) => {
+          const r = adminData.elim[matchNum];
+          const m = matchNum <= 88 ? adminData.elimMatches[matchNum] : null;
+          if(!r || !m) return null;
+          return r === 'LOCAL' ? m.local : m.visita;
+        };
+        const getAdminLoser = (matchNum) => {
+          const r = adminData.elim[matchNum];
+          const m = matchNum <= 88 ? adminData.elimMatches[matchNum] : null;
+          if(!r || !m) return null;
+          return r === 'LOCAL' ? m.visita : m.local;
+        };
+        // For rounds > octavos, we need recursive lookup from admin results
+        const getAdminTeam = (matchNum, loser=false) => {
+          if(matchNum <= 88) return loser ? getAdminLoser(matchNum) : getAdminWinner(matchNum);
+          const f2 = BRACKET_FEED[matchNum];
+          if(!f2) return null;
+          const r = adminData.elim[matchNum];
+          if(!r) return null;
+          const t1 = getAdminTeam(f2.e1);
+          const t2 = getAdminTeam(f2.e2);
+          if(!t1 || !t2) return null;
+          const winner = r === 'LOCAL' ? t1 : t2;
+          const loserT = r === 'LOCAL' ? t2 : t1;
+          return loser ? loserT : winner;
+        };
+
+        const local = feed.losers ? getAdminTeam(feed.e1, true) : getAdminTeam(feed.e1);
+        const visita = feed.losers ? getAdminTeam(feed.e2, true) : getAdminTeam(feed.e2);
+        if(!local || !visita) return;
+
+        faseHasMatches = true;
+        const res = adminData.elim[c] || '';
+        const info2 = ELIM_INFO[c] || {};
+        faseHTML += `<div style="border:1px solid #eee;border-radius:8px;padding:10px;margin-bottom:8px;">
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+            <span style="font-size:10px;color:#999;font-weight:600;">Partido #${c}: ${local} vs ${visita}</span>
+            <span style="font-size:10px;color:#aaa;">📅 ${info2.fecha} · 📍 ${info2.sede}</span>
+          </div>
+          <select onchange="setAdminElim(${c}, this.value)" style="width:100%;padding:6px;border-radius:6px;border:1px solid #ccc;font-size:12px;">
+            <option value="">— Sin resultado —</option>
+            <option value="LOCAL" ${res==='LOCAL'?'selected':''}>Gana ${local}</option>
+            <option value="VISITANTE" ${res==='VISITANTE'?'selected':''}>Gana ${visita}</option>
+          </select>
+        </div>`;
+      });
+      if(faseHasMatches) {
+        html += `<span class="jornada-sep">${fase.n}</span>${faseHTML}`;
+      }
+    });
+  }
+
   document.getElementById('admin-rr').innerHTML = html;
 }
 
-function setFaseActiva(v) {
+function toggleElimActivas() {
   if(!allData["_ADMIN_"]) allData["_ADMIN_"] = {rr:{}, elim:{}, elimMatches:{}, faseActiva:null};
-  allData["_ADMIN_"].faseActiva = v || null;
+  const current = allData["_ADMIN_"].faseActiva;
+  allData["_ADMIN_"].faseActiva = current ? null : 'd16';
+  renderAdmin();
+  renderLockStatus();
 }
 
 function setElimMatchFromSelect(el) {

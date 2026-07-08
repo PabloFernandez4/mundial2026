@@ -1,0 +1,1231 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Porra Mundial 2026</title>
+  <link rel="icon" type="image/png" href="favicon.png">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{--green:#1a7a4a;--green-bg:#e8f5ee;--orange:#e67e22}
+  body{font-family:'Segoe UI',sans-serif;background:#f4f7f6;padding-bottom:100px;color:#333;font-size:14px;}
+  .app-header{background:#1a3a2a;color:white;padding:15px;display:flex;justify-content:space-between;align-items:center}
+  .app-nav{display:flex;background:#fff;border-bottom:1px solid #ddd;overflow-x:auto}
+  .app-nav button{padding:12px;border:none;background:none;color:#666;font-weight:500;white-space:nowrap;font-size:13px;}
+  .app-nav button.active{color:var(--green);border-bottom:2px solid var(--green)}
+  .page{display:none;padding:15px;max-width:600px;margin:0 auto}
+  .page.active{display:block}
+  .card{background:#fff;border:1px solid #ddd;border-radius:8px;padding:15px;margin-bottom:15px}
+  h3{color:var(--green);margin-bottom:10px;font-size:15px;}
+  .btn{background:var(--green);color:white;border:none;border-radius:6px;padding:10px;width:100%;font-weight:bold;margin-top:5px;font-size:14px;cursor:pointer;}
+  .btn.dirty{background:var(--orange)}
+  .btn-save-bar{position:fixed;bottom:0;left:0;right:0;background:#fff;padding:10px;border-top:1px solid #ddd;display:flex;gap:10px;z-index:100;}
+  .btn-secondary{background:#666;flex:0.4}
+  .partido{display:grid;grid-template-columns:1fr 100px 1fr;align-items:center;gap:5px;padding:8px 0;border-bottom:1px solid #eee;font-size:12px;}
+  .t-l{text-align:right;font-weight:600}
+  .t-v{text-align:left;font-weight:600}
+  select, input[type=text]{width:100%;padding:6px;border:1px solid #ccc;border-radius:4px;text-align:center;font-size:11px;background:#fff;}
+  .m3-input{text-align:left;font-size:13px;margin-bottom:10px;}
+  .m3-input.error{border:2px solid #e74c3c; background:#fde8e8}
+  .tab-nav{display:flex;margin-bottom:15px;border-bottom:1px solid #ddd;overflow-x:auto;}
+  .tab-btn{padding:10px;background:#f4f7f6;border:1px solid #ddd;border-bottom:none;cursor:pointer;flex:1;white-space:nowrap;border-radius:6px 6px 0 0;font-weight:600;color:#666;}
+  .tab-btn.active{background:var(--green);color:#fff;border-color:var(--green);}
+  .tab-content{display:none;}
+  .tab-content.active{display:block;}
+  .jornada-nav{display:flex;gap:5px;margin-bottom:15px;overflow-x:auto;padding-bottom:5px;}
+  .jornada-btn{padding:8px 15px;background:#eee;border:none;border-radius:20px;cursor:pointer;font-size:12px;font-weight:600;white-space:nowrap;color:#555;}
+  .jornada-btn.active{background:var(--green);color:white}
+  .jornada-sep{font-size:11px;color:#fff;background:#333;padding:4px 8px;border-radius:4px;margin:10px 0 5px;font-weight:600;text-transform:uppercase;display:inline-block;}
+  .clasif-table{width:100%;border-collapse:collapse;font-size:12px;}
+  .clasif-table th{background:var(--green);color:white;padding:8px;text-align:center;}
+  .clasif-table td{padding:8px;border-bottom:1px solid #eee;text-align:center;}
+  .error-box{background:#fde8e8;color:#7a0000;padding:10px;border-radius:6px;font-size:12px;margin-bottom:10px;display:none;border:1px solid #f5b7b1;}
+  .progress-bar-wrap{background:#eee;border-radius:20px;height:8px;margin:6px 0 2px;}
+  .progress-bar-fill{height:8px;border-radius:20px;background:var(--green);transition:width 0.3s;}
+  .progress-label{font-size:11px;color:#888;text-align:right;}
+  .podium{display:flex;align-items:flex-end;justify-content:center;gap:8px;margin:15px 0 20px;}
+  .podium-place{display:flex;flex-direction:column;align-items:center;flex:1;}
+  .podium-name{font-size:11px;font-weight:700;text-align:center;margin-bottom:4px;word-break:break-word;}
+  .podium-pts{font-size:10px;color:#666;margin-bottom:4px;}
+  .podium-block{width:100%;border-radius:6px 6px 0 0;display:flex;align-items:center;justify-content:center;font-size:22px;}
+  .podium-1 .podium-block{height:80px;background:#FFD700;}
+  .podium-2 .podium-block{height:60px;background:#C0C0C0;}
+  .podium-3 .podium-block{height:45px;background:#CD7F32;}
+  .resultado-item{display:grid;grid-template-columns:28px 1fr 60px 1fr;align-items:center;gap:5px;padding:7px 0;border-bottom:1px solid #eee;font-size:12px;}
+  .res-num{font-size:10px;color:#aaa;font-weight:600;text-align:center;}
+  .res-local{text-align:right;font-weight:600;}
+  .res-visit{text-align:left;font-weight:600;}
+  .res-badge{text-align:center;font-size:10px;font-weight:700;padding:2px 4px;border-radius:4px;}
+  .res-L{background:#e8f5ee;color:#1a7a4a;}
+  .res-E{background:#fff8e1;color:#b7860a;}
+  .res-V{background:#fde8e8;color:#c0392b;}
+  .comp-wrap{overflow-x:auto;margin-top:10px;}
+  .comp-table{border-collapse:collapse;font-size:11px;min-width:100%;}
+  .comp-table th{background:#1a3a2a;color:white;padding:6px 8px;text-align:center;white-space:nowrap;position:sticky;top:0;}
+  .comp-table th.partido-col{text-align:left;min-width:140px;position:sticky;left:0;z-index:2;background:#1a3a2a;}
+  .comp-table td{padding:5px 6px;border-bottom:1px solid #eee;text-align:center;white-space:nowrap;}
+  .comp-table td.partido-col{text-align:left;background:#f9f9f9;font-weight:600;font-size:10px;position:sticky;left:0;z-index:1;}
+  .comp-table tr:hover td{background:#f0f7f3;}
+  .comp-table tr:hover td.partido-col{background:#e8f5ee;}
+  .c-ok{background:#c8f0d8;color:#1a7a4a;font-weight:700;border-radius:3px;}
+  .c-fail{background:#fde8e8;color:#c0392b;border-radius:3px;}
+  .c-pend{color:#bbb;}
+  .comp-jornada{background:#333;color:#fff;font-size:10px;font-weight:700;text-transform:uppercase;padding:4px 8px;}
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <div style="display:flex;align-items:center;gap:10px;">
+    <img src="favicon.png" style="width:36px;height:36px;border-radius:50%;object-fit:cover;" alt="logo">
+    <h1>Porra Mundial 2026</h1>
+  </div>
+  <div onclick="cambiarJugador()" style="cursor:pointer;font-size:12px;background:rgba(255,255,255,0.2);padding:5px 10px;border-radius:15px;">👤 <span id="hdr-player">Entrar</span></div>
+</div>
+
+<div class="app-nav">
+  <button class="active" onclick="nav('setup',this)">Inicio</button>
+  <button onclick="nav('grupos',this)">Grupos</button>
+  <button onclick="nav('elim',this)">Eliminatorias</button>
+  <button onclick="nav('resultados',this)">Resultados</button>
+  <button onclick="nav('clasif',this)">Clasificación</button>
+  <button id="nav-admin" style="display:none; color:#d35400;font-weight:bold;" onclick="nav('admin',this)">Admin</button>
+</div>
+
+<div id="setup" class="page active">
+  <div class="card">
+    <h3>Tu Identificación</h3>
+    <p style="font-size:12px;color:#666;margin-bottom:10px;">Escribe tu nombre para guardar tus pronósticos o continuar por donde lo dejaste.</p>
+    <input type="text" id="inp-nombre" style="font-size:14px;padding:10px;text-align:left;" placeholder="Tu nombre..." autocomplete="off">
+    <button class="btn" onclick="entrar()">Entrar a la porra</button>
+  </div>
+</div>
+
+<div id="grupos" class="page">
+  <div class="jornada-nav">
+    <button class="jornada-btn active" onclick="showJornada(1, this)">Jornada 1</button>
+    <button class="jornada-btn" onclick="showJornada(2, this)">Jornada 2</button>
+    <button class="jornada-btn" onclick="showJornada(3, this)">Jornada 3</button>
+  </div>
+  <div id="grupos-cont"></div>
+  <div class="btn-save-bar" id="grupos-save-bar">
+    <button class="btn btn-secondary" onclick="rellenarAleatorio()">🎲 Azar</button>
+    <button class="btn" style="flex:1" id="btn-save-grupos" onclick="guardarManual()">💾 Guardar Grupos</button>
+  </div>
+</div>
+
+<div id="elim" class="page">
+  <div id="bracket-cont"></div>
+  <div class="btn-save-bar" id="elim-save-bar">
+    <button class="btn" id="btn-save-elim" onclick="guardarManual()">💾 Guardar Eliminatorias</button>
+  </div>
+</div>
+
+<div id="resultados" class="page"><div class="card"><h3>⚽ Resultados Reales</h3><div id="resultados-cont"></div></div></div>
+<div id="clasif" class="page"><div id="clasif-cont"></div></div>
+<div id="admin" class="page"><div class="card"><h3>Panel Admin</h3>
+<div id="lock-status-box" style="margin-bottom:15px;padding:12px;border-radius:8px;text-align:center;font-weight:bold;font-size:14px;"></div>
+<button id="btn-toggle-lock" class="btn" style="margin-bottom:15px;" onclick="toggleLock()">🔒 Bloquear pronósticos</button>
+<button class="btn btn-secondary" style="margin-bottom:15px; background:#2980b9" onclick="exportarCSV()">📥 Descargar Apuestas en CSV</button>
+<button class="btn btn-secondary" style="margin-bottom:15px; background:#8e44ad" onclick="toggleComparativa()">👁️ Ver comparativa de pronósticos</button>
+<div id="admin-comparativa" style="display:none;margin-bottom:15px;"></div>
+<div id="admin-rr"></div><div class="btn-save-bar"><button class="btn" onclick="guardarManual()">Guardar Admin</button></div></div></div>
+
+<script>
+const GRUPOS = {"A":{"eq":["MÉXICO","SUDÁFRICA","COREA DEL SUR","REPÚBLICA CHECA"],"p":[{"c":1,"l":"MÉXICO","v":"SUDÁFRICA","j":1},{"c":2,"l":"COREA DEL SUR","v":"REPÚBLICA CHECA","j":1},{"c":25,"l":"REPÚBLICA CHECA","v":"SUDÁFRICA","j":2},{"c":26,"l":"MÉXICO","v":"COREA DEL SUR","j":2},{"c":49,"l":"SUDÁFRICA","v":"COREA DEL SUR","j":3},{"c":50,"l":"REPÚBLICA CHECA","v":"MÉXICO","j":3}]},"B":{"eq":["CANADÁ","BOSNIA Y HERZEGOVINA","QATAR","SUIZA"],"p":[{"c":3,"l":"CANADÁ","v":"BOSNIA Y HERZEGOVINA","j":1},{"c":4,"l":"QATAR","v":"SUIZA","j":1},{"c":27,"l":"SUIZA","v":"BOSNIA Y HERZEGOVINA","j":2},{"c":28,"l":"CANADÁ","v":"QATAR","j":2},{"c":51,"l":"SUIZA","v":"CANADÁ","j":3},{"c":52,"l":"BOSNIA Y HERZEGOVINA","v":"QATAR","j":3}]},"C":{"eq":["BRASIL","MARRUECOS","HAITÍ","ESCOCIA"],"p":[{"c":5,"l":"BRASIL","v":"MARRUECOS","j":1},{"c":6,"l":"HAITÍ","v":"ESCOCIA","j":1},{"c":29,"l":"ESCOCIA","v":"MARRUECOS","j":2},{"c":30,"l":"BRASIL","v":"HAITÍ","j":2},{"c":53,"l":"MARRUECOS","v":"HAITÍ","j":3},{"c":54,"l":"ESCOCIA","v":"BRASIL","j":3}]},"D":{"eq":["ESTADOS UNIDOS","PARAGUAY","AUSTRALIA","TURQUÍA"],"p":[{"c":7,"l":"ESTADOS UNIDOS","v":"PARAGUAY","j":1},{"c":8,"l":"AUSTRALIA","v":"TURQUÍA","j":1},{"c":31,"l":"ESTADOS UNIDOS","v":"AUSTRALIA","j":2},{"c":32,"l":"TURQUÍA","v":"PARAGUAY","j":2},{"c":55,"l":"PARAGUAY","v":"AUSTRALIA","j":3},{"c":56,"l":"TURQUÍA","v":"ESTADOS UNIDOS","j":3}]},"E":{"eq":["ALEMANIA","CURAZAO","COSTA DE MARFIL","ECUADOR"],"p":[{"c":9,"l":"ALEMANIA","v":"CURAZAO","j":1},{"c":10,"l":"COSTA DE MARFIL","v":"ECUADOR","j":1},{"c":33,"l":"ALEMANIA","v":"COSTA DE MARFIL","j":2},{"c":34,"l":"ECUADOR","v":"CURAZAO","j":2},{"c":57,"l":"ECUADOR","v":"ALEMANIA","j":3},{"c":58,"l":"CURAZAO","v":"COSTA DE MARFIL","j":3}]},"F":{"eq":["PAÍSES BAJOS","JAPÓN","SUECIA","TÚNEZ"],"p":[{"c":11,"l":"PAÍSES BAJOS","v":"JAPÓN","j":1},{"c":12,"l":"SUECIA","v":"TÚNEZ","j":1},{"c":35,"l":"PAÍSES BAJOS","v":"SUECIA","j":2},{"c":36,"l":"TÚNEZ","v":"JAPÓN","j":2},{"c":59,"l":"TÚNEZ","v":"PAÍSES BAJOS","j":3},{"c":60,"l":"JAPÓN","v":"SUECIA","j":3}]},"G":{"eq":["BÉLGICA","EGIPTO","IRÁN","NUEVA ZELANDA"],"p":[{"c":13,"l":"BÉLGICA","v":"EGIPTO","j":1},{"c":14,"l":"IRÁN","v":"NUEVA ZELANDA","j":1},{"c":37,"l":"BÉLGICA","v":"IRÁN","j":2},{"c":38,"l":"NUEVA ZELANDA","v":"EGIPTO","j":2},{"c":61,"l":"EGIPTO","v":"IRÁN","j":3},{"c":62,"l":"NUEVA ZELANDA","v":"BÉLGICA","j":3}]},"H":{"eq":["ESPAÑA","CABO VERDE","ARABIA SAUDÍ","URUGUAY"],"p":[{"c":15,"l":"ESPAÑA","v":"CABO VERDE","j":1},{"c":16,"l":"ARABIA SAUDÍ","v":"URUGUAY","j":1},{"c":39,"l":"ESPAÑA","v":"ARABIA SAUDÍ","j":2},{"c":40,"l":"URUGUAY","v":"CABO VERDE","j":2},{"c":63,"l":"URUGUAY","v":"ESPAÑA","j":3},{"c":64,"l":"CABO VERDE","v":"ARABIA SAUDÍ","j":3}]},"I":{"eq":["FRANCIA","SENEGAL","IRAK","NORUEGA"],"p":[{"c":17,"l":"FRANCIA","v":"SENEGAL","j":1},{"c":18,"l":"IRAK","v":"NORUEGA","j":1},{"c":41,"l":"FRANCIA","v":"IRAK","j":2},{"c":42,"l":"NORUEGA","v":"SENEGAL","j":2},{"c":65,"l":"NORUEGA","v":"FRANCIA","j":3},{"c":66,"l":"SENEGAL","v":"IRAK","j":3}]},"J":{"eq":["ARGENTINA","ARGELIA","AUSTRIA","JORDANIA"],"p":[{"c":19,"l":"ARGENTINA","v":"ARGELIA","j":1},{"c":20,"l":"AUSTRIA","v":"JORDANIA","j":1},{"c":43,"l":"ARGENTINA","v":"AUSTRIA","j":2},{"c":44,"l":"JORDANIA","v":"ARGELIA","j":2},{"c":67,"l":"ARGELIA","v":"AUSTRIA","j":3},{"c":68,"l":"JORDANIA","v":"ARGENTINA","j":3}]},"K":{"eq":["PORTUGAL","RD CONGO","UZBEKISTÁN","COLOMBIA"],"p":[{"c":21,"l":"PORTUGAL","v":"RD CONGO","j":1},{"c":22,"l":"UZBEKISTÁN","v":"COLOMBIA","j":1},{"c":45,"l":"PORTUGAL","v":"UZBEKISTÁN","j":2},{"c":46,"l":"COLOMBIA","v":"RD CONGO","j":2},{"c":69,"l":"COLOMBIA","v":"PORTUGAL","j":3},{"c":70,"l":"RD CONGO","v":"UZBEKISTÁN","j":3}]},"L":{"eq":["INGLATERRA","CROACIA","GHANA","PANAMÁ"],"p":[{"c":23,"l":"INGLATERRA","v":"CROACIA","j":1},{"c":24,"l":"GHANA","v":"PANAMÁ","j":1},{"c":47,"l":"INGLATERRA","v":"GHANA","j":2},{"c":48,"l":"PANAMÁ","v":"CROACIA","j":2},{"c":71,"l":"PANAMÁ","v":"INGLATERRA","j":3},{"c":72,"l":"CROACIA","v":"GHANA","j":3}]}};
+const ALL_TEAMS = Object.values(GRUPOS).flatMap(g => g.eq).sort((a,b) => a.localeCompare(b, 'es'));
+
+function teamSelectHTML(selected, matchNum, campo) {
+  let h = `<select data-match="${matchNum}" data-campo="${campo}" onchange="setElimMatchFromSelect(this)" style="width:100%;padding:6px;border:1px solid #ccc;border-radius:6px;font-size:12px;">`;
+  h += `<option value="">(Selecciona equipo)</option>`;
+  ALL_TEAMS.forEach(t => h += `<option value="${t}" ${selected===t?'selected':''}>${t}</option>`);
+  h += `</select>`;
+  return h;
+}
+
+const FASES_ELIM = [
+  {id:'d16', n:'Dieciseisavos', partidos: Array.from({length:16}, (_,i) => 73+i)},
+  {id:'oct', n:'Octavos de final', partidos: Array.from({length:8}, (_,i) => 89+i)},
+  {id:'cua', n:'Cuartos de final', partidos: Array.from({length:4}, (_,i) => 97+i)},
+  {id:'sem', n:'Semifinales', partidos: [101,102]},
+  {id:'fin', n:'Final y 3er Puesto', partidos: [103,104]},
+];
+
+// Bracket progression: each match feeds into the next round
+// Based on official WC2026 bracket structure
+const ELIM_INFO = {
+  73:  {fecha:'28 jun', sede:'SoFi Stadium, Los Ángeles'},
+  74:  {fecha:'29 jun', sede:'Gillette Stadium, Boston'},
+  75:  {fecha:'29 jun', sede:'Estadio Monterrey, Monterrey'},
+  76:  {fecha:'29 jun', sede:'NRG Stadium, Houston'},
+  77:  {fecha:'30 jun', sede:'MetLife Stadium, Nueva York/NJ'},
+  78:  {fecha:'30 jun', sede:'AT&T Stadium, Dallas'},
+  79:  {fecha:'30 jun', sede:'Estadio Azteca, Ciudad de México'},
+  80:  {fecha:'1 jul',  sede:'Mercedes-Benz Stadium, Atlanta'},
+  81:  {fecha:'1 jul',  sede:'Levi\'s Stadium, San Francisco'},
+  82:  {fecha:'1 jul',  sede:'Lumen Field, Seattle'},
+  83:  {fecha:'2 jul',  sede:'Estadio Nacional, Toronto'},
+  84:  {fecha:'2 jul',  sede:'SoFi Stadium, Los Ángeles'},
+  85:  {fecha:'2 jul',  sede:'BC Place, Vancouver'},
+  86:  {fecha:'3 jul',  sede:'Hard Rock Stadium, Miami'},
+  87:  {fecha:'3 jul',  sede:'Arrowhead Stadium, Kansas City'},
+  88:  {fecha:'3 jul',  sede:'AT&T Stadium, Dallas'},
+  89:  {fecha:'4 jul',  sede:'Filadelfia'},
+  90:  {fecha:'4 jul',  sede:'Houston'},
+  91:  {fecha:'5 jul',  sede:'Nueva York/NJ'},
+  92:  {fecha:'5 jul',  sede:'Ciudad de México'},
+  93:  {fecha:'6 jul',  sede:'Dallas'},
+  94:  {fecha:'6 jul',  sede:'Seattle'},
+  95:  {fecha:'7 jul',  sede:'Atlanta'},
+  96:  {fecha:'7 jul',  sede:'Vancouver'},
+  97:  {fecha:'9 jul',  sede:'Boston'},
+  98:  {fecha:'10 jul', sede:'Los Ángeles'},
+  99:  {fecha:'11 jul', sede:'Miami'},
+  100: {fecha:'11 jul', sede:'Kansas City'},
+  101: {fecha:'14 jul', sede:'Dallas'},
+  102: {fecha:'15 jul', sede:'Atlanta'},
+  103: {fecha:'18 jul', sede:'Miami'},
+  104: {fecha:'19 jul', sede:'Nueva York/NJ'},
+};
+const BRACKET_FEED = {
+  // Octavos (89-96) fed by dieciseisavos (73-88)
+  89: {e1: 74, e2: 77},   // G74 vs G77
+  90: {e1: 73, e2: 75},   // G73 vs G75
+  91: {e1: 76, e2: 78},   // G76 vs G78
+  92: {e1: 79, e2: 80},   // G79 vs G80
+  93: {e1: 83, e2: 84},   // G83 vs G84
+  94: {e1: 81, e2: 82},   // G81 vs G82
+  95: {e1: 86, e2: 88},   // G86 vs G88
+  96: {e1: 85, e2: 87},   // G85 vs G87
+  // Cuartos (97-100) fed by octavos (89-96)
+  97: {e1: 89, e2: 90},
+  98: {e1: 93, e2: 94},
+  99: {e1: 91, e2: 92},
+  100: {e1: 95, e2: 96},
+  // Semis (101-102) fed by cuartos (97-100)
+  101: {e1: 97, e2: 98},
+  102: {e1: 99, e2: 100},
+  // Final (104) and 3rd place (103) fed by semis
+  103: {e1: 101, e2: 102, losers: true}, // perdedores semis
+  104: {e1: 101, e2: 102},               // ganadores semis
+};
+
+const M3_KEYS = ['ABCDF','CDFGH','CEFHI','EHIJK','BEFIJ','AEHIJ','EFGIJ','DEIJL'];
+
+// Get the team name a user has picked to win from a given match
+function getWinnerFromUserElim(matchNum) {
+  const sel = allData[jugador]?.elim?.[matchNum];
+  if(!sel) return null;
+  const match = getMatchTeams(matchNum);
+  if(!match) return null;
+  return sel === 'LOCAL' ? match.local : match.visita;
+}
+
+function getLoserFromUserElim(matchNum) {
+  const sel = allData[jugador]?.elim?.[matchNum];
+  if(!sel) return null;
+  const match = getMatchTeams(matchNum);
+  if(!match) return null;
+  return sel === 'LOCAL' ? match.visita : match.local;
+}
+
+// Recursively get match teams — either from admin (d16) or computed from user picks
+function getMatchTeams(c) {
+  // Dieciseisavos: teams come from admin
+  if(c >= 73 && c <= 88) {
+    const m = allData["_ADMIN_"]?.elimMatches?.[c];
+    return m?.local && m?.visita ? m : null;
+  }
+  // Later rounds: compute from bracket feed
+  const feed = BRACKET_FEED[c];
+  if(!feed) return null;
+  let local, visita;
+  if(feed.losers) {
+    local = getLoserFromUserElim(feed.e1);
+    visita = getLoserFromUserElim(feed.e2);
+  } else {
+    local = getWinnerFromUserElim(feed.e1);
+    visita = getWinnerFromUserElim(feed.e2);
+  }
+  if(!local || !visita) return null;
+  return {local, visita};
+}
+
+// Helper: get real match info from _ADMIN_.elimMatches
+function getElimMatch(c) {
+  return allData["_ADMIN_"]?.elimMatches?.[c] || null;
+}
+
+// Helper: get fase for a match number
+function getFase(c) {
+  return FASES_ELIM.find(f => f.partidos.includes(c));
+}
+
+let jugador='', allData={};
+const API_URL = 'https://script.google.com/macros/s/AKfycbxlgw07MBZSVdLvQ1_2_0n2MsO7Pg8pjjSoF5nq6U4aJ_x9UK0SVdea9oZ-OkGcC54ZlA/exec';
+
+function isLocked() {
+  return allData["_ADMIN_"]?.locked === true;
+}
+
+function isLockedGrupos() {
+  return isLocked();
+}
+
+function isLockedElim() {
+  // Elim is only locked if no active phase (eliminatorias not started)
+  // Once admin activates eliminations, users can always pick winners
+  return !allData["_ADMIN_"]?.faseActiva;
+}
+
+function renderLockStatus() {
+  const box = document.getElementById('lock-status-box');
+  const btn = document.getElementById('btn-toggle-lock');
+  if(!box) return;
+  if(isLocked()) {
+    box.style.background = '#fde8e8';
+    box.style.color = '#7a0000';
+    box.style.border = '1px solid #f5b7b1';
+    box.innerHTML = '🔒 Pronósticos BLOQUEADOS — los jugadores no pueden modificar sus apuestas';
+    btn.innerText = '🔓 Desbloquear pronósticos';
+    btn.style.background = '#e67e22';
+  } else {
+    box.style.background = '#e8f5ee';
+    box.style.color = '#1a5c34';
+    box.style.border = '1px solid #a9d9bc';
+    box.innerHTML = '🔓 Pronósticos ABIERTOS — los jugadores pueden modificar sus apuestas';
+    btn.innerText = '🔒 Bloquear pronósticos';
+    btn.style.background = '#1a7a4a';
+  }
+}
+
+async function toggleLock() {
+  if(!allData["_ADMIN_"]) allData["_ADMIN_"] = {rr:{}, elim:{}};
+  const newState = !allData["_ADMIN_"].locked;
+  const accion = newState ? 'bloquear' : 'desbloquear';
+  if(!confirm(`¿Seguro que quieres ${accion} los pronósticos de todos los jugadores?`)) return;
+  allData["_ADMIN_"].locked = newState;
+  renderLockStatus();
+  await guardarManual();
+}
+
+function normalizeElim(val) {
+  if(!val) return '';
+  if(val === 'EMPATE_L') return 'LOCAL';
+  if(val === 'EMPATE_V') return 'VISITANTE';
+  return val;
+}
+
+// Get the winning team name from a match result
+// userPick: 'LOCAL' or 'VISITANTE', matchNum: 73-104
+// Get match teams for scoring — works for all rounds including computed ones
+function getMatchTeamsForScoring(matchNum) {
+  const c = parseInt(matchNum);
+  // Dieciseisavos: from admin elimMatches
+  if(c >= 73 && c <= 88) {
+    const m = allData["_ADMIN_"]?.elimMatches?.[c];
+    return m?.local && m?.visita ? m : null;
+  }
+  // Later rounds: compute from real admin results of previous round
+  const feed = BRACKET_FEED[c];
+  if(!feed) return null;
+  const getTeam = (mn, loser=false) => {
+    const res = allData["_ADMIN_"]?.elim?.[mn];
+    if(!res) return null;
+    const m = getMatchTeamsForScoring(mn);
+    if(!m) return null;
+    const winner = res === 'LOCAL' ? m.local : m.visita;
+    const loserT = res === 'LOCAL' ? m.visita : m.local;
+    return loser ? loserT : winner;
+  };
+  const local = feed.losers ? getTeam(feed.e1, true) : getTeam(feed.e1);
+  const visita = feed.losers ? getTeam(feed.e2, true) : getTeam(feed.e2);
+  if(!local || !visita) return null;
+  return {local, visita};
+}
+
+function getWinnerTeamName(pick, matchNum) {
+  if(!pick) return null;
+  const match = getMatchTeamsForScoring(matchNum);
+  if(!match) return null;
+  return pick === 'LOCAL' ? match.local : match.visita;
+}
+
+// Get the real winner team name from admin result
+function getRealWinnerTeamName(matchNum) {
+  const res = allData["_ADMIN_"]?.elim?.[matchNum];
+  if(!res) return null;
+  const match = getMatchTeamsForScoring(matchNum);
+  if(!match) return null;
+  return res === 'LOCAL' ? match.local : match.visita;
+}
+
+// Calculate elim points for a user: 1pt per correct team pick
+function calcElimPoints(userElim) {
+  let pts = 0;
+  if(!userElim) return 0;
+  Object.keys(userElim).forEach(c => {
+    const userPick = userElim[c];
+    if(!userPick) return;
+    const realWinner = getRealWinnerTeamName(parseInt(c));
+    if(!realWinner) return;
+    // Get user's chosen team name
+    const userWinner = getWinnerTeamName(userPick, parseInt(c));
+    if(userWinner && userWinner === realWinner) pts += 1;
+  });
+  return pts;
+}
+
+async function loadAll(){ 
+  try { 
+    const res = await fetch(API_URL); 
+    const text = await res.text();
+    try {
+      allData = JSON.parse(text);
+      // Ensure _ADMIN_ has new structure
+      if(!allData["_ADMIN_"]) allData["_ADMIN_"] = {rr:{}, elim:{}, elimMatches:{}, faseActiva:null};
+      if(!allData["_ADMIN_"].elimMatches) allData["_ADMIN_"].elimMatches = {};
+      if(!allData["_ADMIN_"].hasOwnProperty('faseActiva')) allData["_ADMIN_"].faseActiva = null;
+      // Migrate old EMPATE_L/EMPATE_V to LOCAL/VISITANTE
+      Object.keys(allData).forEach(user => {
+        if(user === '_ADMIN_') return;
+        const elim = allData[user]?.elim;
+        if(elim) Object.keys(elim).forEach(c => {
+          if(elim[c] === 'EMPATE_L') elim[c] = 'LOCAL';
+          if(elim[c] === 'EMPATE_V') elim[c] = 'VISITANTE';
+        });
+      });
+    } catch(e) {
+      console.error('Error parseando JSON de BD:', text.substring(0,200));
+      allData = {};
+    }
+  } catch(e) { 
+    console.error('Error conectando con BD:', e);
+    allData = {}; 
+  } 
+
+}
+
+async function guardarManual(){ 
+  // Build payload: only send current user's data (not full allData)
+  const payload = {};
+  
+  if(jugador === '_ADMIN_') {
+    // Admin always can save
+    payload['_ADMIN_'] = allData['_ADMIN_'];
+  } else {
+    // For groups: block if locked
+    const userData = { ...allData[jugador] };
+    if(isLocked()) {
+      // Only allow saving elim data, not pron or m3
+      delete userData.pron;
+      delete userData.m3;
+    }
+    if(isLockedElim()) {
+      // Block elim too if no active phase
+      delete userData.elim;
+    }
+    payload[jugador] = userData;
+  }
+
+  document.querySelectorAll('.btn').forEach(b => b.innerText = "Guardando...");
+  try {
+    await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload), headers: {'Content-Type': 'text/plain'} }); 
+    document.querySelectorAll('.btn').forEach(b => b.classList.remove('dirty'));
+    alert("¡Tus pronósticos se han guardado correctamente!");
+  } catch(e) {
+    alert("Hubo un error al guardar. Revisa tu conexión.");
+  }
+  document.getElementById('btn-save-grupos').innerText = "💾 Guardar Grupos";
+  document.getElementById('btn-save-elim').innerText = "💾 Guardar Eliminatorias";
+}
+
+function markDirty() { 
+  document.getElementById('btn-save-grupos').classList.add('dirty');
+  document.getElementById('btn-save-elim').classList.add('dirty');
+}
+
+function nav(id, btn) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.app-nav button').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+  if(id==='grupos') {
+    showJornada(1, document.querySelector('.jornada-btn'));
+    const locked = isLocked();
+    document.getElementById('grupos-save-bar').style.display = locked ? 'none' : 'flex';
+  }
+  if(id==='elim') {
+    renderElim();
+    document.getElementById('elim-save-bar').style.display = isLockedElim() ? 'none' : 'flex';
+  }
+  if(id==='resultados') renderResultados();
+  if(id==='clasif') renderClasif();
+  if(id==='admin') { renderAdmin(); renderLockStatus(); }
+}
+
+function showJornada(j, btn) {
+  document.querySelectorAll('.jornada-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const cont = document.getElementById('grupos-cont'); 
+  cont.innerHTML = "";
+
+  // Progress bar
+  const totalPartidos = Object.values(GRUPOS).reduce((a,g) => a + g.p.length, 0);
+  const rellenados = Object.values(GRUPOS).reduce((a,g) => a + g.p.filter(p => allData[jugador]?.pron?.[p.c]).length, 0);
+  const pct = Math.round(rellenados / totalPartidos * 100);
+  cont.innerHTML = `<div class="card" style="padding:10px 15px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+      <span style="font-size:12px;font-weight:600;color:#555;">Tu progreso en grupos</span>
+      <span style="font-size:12px;font-weight:700;color:var(--green);">${rellenados}/${totalPartidos}</span>
+    </div>
+    <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
+    <div class="progress-label">${pct}% completado</div>
+  </div>`;
+
+  // Banner de bloqueo
+  if(isLocked()) {
+    cont.innerHTML += `<div style="background:#fde8e8;color:#7a0000;border:1px solid #f5b7b1;border-radius:8px;padding:12px;margin-bottom:15px;font-size:13px;font-weight:600;">🔒 La competición ha comenzado. Tus pronósticos están bloqueados y ya no se pueden modificar.</div>`;
+  }
+  
+  Object.keys(GRUPOS).forEach(lt => {
+    let html = `<div class="card"><h3>Grupo ${lt}</h3>`;
+    const partidos = GRUPOS[lt].p.filter(p => p.j === j);
+    partidos.forEach(p => {
+       const sel = allData[jugador]?.pron[p.c] || '';
+       const bg = sel === 'LOCAL' ? '#e8f5ee' : sel === 'EMPATE' ? '#fff8e1' : sel === 'VISITANTE' ? '#fde8e8' : '#fff';
+       const disabled = isLocked() ? 'disabled' : '';
+       html += `<div class="partido" style="grid-template-columns:28px 1fr 90px 1fr;">
+                  <div style="font-size:10px;color:#aaa;display:flex;align-items:center;justify-content:center;font-weight:600;">${p.c}</div>
+                  <div class="t-l">${p.l}</div>
+                  <select onchange="setPron(${p.c}, this.value)" style="background:${bg}" ${disabled}>
+                    <option value="">(Elige)</option>
+                    <option value="LOCAL" ${sel==='LOCAL'?'selected':''}>L (Local)</option>
+                    <option value="EMPATE" ${sel==='EMPATE'?'selected':''}>E (Empate)</option>
+                    <option value="VISITANTE" ${sel==='VISITANTE'?'selected':''}>V (Visit)</option>
+                  </select>
+                  <div class="t-v">${p.v}</div>
+                </div>`;
+    });
+    cont.innerHTML += html + `</div>`;
+  });
+}
+
+function switchElimTab(tab) {
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById(tab+'-cont').classList.add('active');
+  document.getElementById('btn-'+tab).classList.add('active');
+}
+
+// LOGICA DE CALCULO DE CLASIFICACION AUTOMATICA
+function getUserStandings() {
+  let st = {};
+  Object.keys(GRUPOS).forEach(lt => {
+    let pts = {};
+    GRUPOS[lt].eq.forEach(eq => pts[eq] = 0);
+    GRUPOS[lt].p.forEach(p => {
+      let pron = allData[jugador]?.pron?.[p.c];
+      if(pron === 'LOCAL') pts[p.l] += 3;
+      else if(pron === 'VISITANTE') pts[p.v] += 3;
+      else if(pron === 'EMPATE') { pts[p.l] += 1; pts[p.v] += 1; }
+    });
+    st[lt] = GRUPOS[lt].eq.slice().sort((a,b) => {
+       if(pts[b] !== pts[a]) return pts[b] - pts[a];
+       return a.localeCompare(b);
+    });
+  });
+  return st;
+}
+
+function getM3OptionsHTML(val, st) {
+  let terceros = [];
+  let otros = [];
+  Object.keys(st).forEach(lt => {
+    terceros.push(st[lt][2]);
+    otros.push(st[lt][0], st[lt][1], st[lt][3]);
+  });
+  terceros.sort();
+  otros.sort();
+
+  let h = `<option value="">(Elige un equipo)</option>`;
+  h += `<optgroup label="Terceros en sus grupos (Precalculado)">`;
+  terceros.forEach(t => h += `<option value="${t}" ${val===t?'selected':''}>${t}</option>`);
+  h += `</optgroup><optgroup label="Resto de equipos (Por si hay empates)">`;
+  otros.forEach(t => h += `<option value="${t}" ${val===t?'selected':''}>${t}</option>`);
+  h += `</optgroup>`;
+  return h;
+}
+
+function getTeamName(code, st) {
+  if(!code) return "—";
+  if(code.startsWith('M3-')) {
+    const k = code.split('-')[1];
+    return allData[jugador]?.m3?.[k] || `Mejor 3º (${k})`;
+  }
+  if(code.startsWith('1') || code.startsWith('2')) {
+     const pos = parseInt(code[0]) - 1; 
+     const group = code[1];
+     return st[group][pos];
+  }
+  if(code.startsWith('G') || code.startsWith('P')) {
+     const matchCode = parseInt(code.substring(1));
+     const matchDef = flatElim.find(m => m.c === matchCode);
+     if(!matchDef) return code;
+     
+     const t1 = getTeamName(matchDef.e1, st);
+     const t2 = getTeamName(matchDef.e2, st);
+     
+     const sel = allData[jugador]?.elim?.[matchCode];
+     if(!sel) return code.startsWith('G') ? `Gan. ${matchCode}` : `Perd. ${matchCode}`;
+     
+     const isLocalWin = sel === 'LOCAL' || sel === 'EMPATE_L';
+     const isVisitWin = sel === 'VISITANTE' || sel === 'EMPATE_V';
+     
+     if(code.startsWith('G')) {
+        if(isLocalWin) return t1;
+        if(isVisitWin) return t2;
+     } else {
+        if(isLocalWin) return t2;
+        if(isVisitWin) return t1;
+     }
+  }
+  return code;
+}
+
+function renderElim() {
+  const elimMatches = allData["_ADMIN_"]?.elimMatches || {};
+  const elimResults = allData["_ADMIN_"]?.elim || {};
+  const faseActiva = allData["_ADMIN_"]?.faseActiva || null;
+  const bCont = document.getElementById('bracket-cont');
+
+  // Check if admin has defined at least one d16 match
+  const hasD16 = Object.keys(elimMatches).some(c => parseInt(c) >= 73 && parseInt(c) <= 88 && elimMatches[c].local && elimMatches[c].visita);
+
+  if(!faseActiva || !hasD16) {
+    bCont.innerHTML = `<div class="card" style="text-align:center;padding:30px;color:#888;">
+      <div style="font-size:40px;margin-bottom:10px;">⏳</div>
+      <p style="font-weight:600;">La fase eliminatoria aún no ha comenzado.</p>
+      <p style="font-size:12px;margin-top:5px;">El administrador activará los cruces cuando empiece.</p>
+    </div>`;
+    return;
+  }
+
+  let hB = '';
+  const userElim = allData[jugador]?.elim || {};
+  const locked = isLockedElim();
+
+  FASES_ELIM.forEach(fase => {
+    let faseHTML = '';
+    let anyMatchAvailable = false;
+
+    fase.partidos.forEach(c => {
+      const match = getMatchTeams(c);
+      if(!match) return; // teams not determined yet
+
+      anyMatchAvailable = true;
+      const sel = userElim[c] || '';
+      const bgLocal = sel === 'LOCAL' ? '#e8f5ee' : '#fff';
+      const bgVisit = sel === 'VISITANTE' ? '#fde8e8' : '#fff';
+      const resultado = elimResults[c];
+      const disabled = locked ? 'disabled' : '';
+      const info = ELIM_INFO[c] || {};
+
+      // Show result badge if admin has entered result
+      const resultBadge = resultado ?
+        `<div style="font-size:10px;text-align:center;margin-top:4px;color:#666;">
+          ✅ Ganó: <strong style="color:${resultado==='LOCAL'?'#1a7a4a':'#c0392b'}">${resultado==='LOCAL'?match.local:match.visita}</strong>
+        </div>` : '';
+
+      faseHTML += `<div class="card" style="padding:10px;margin-bottom:8px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+          <span style="font-size:10px;color:#999;font-weight:600;">Partido #${c}</span>
+          <span style="font-size:10px;color:#aaa;">📅 ${info.fecha||''} · 📍 ${info.sede||''}</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 24px 1fr;gap:4px;align-items:center;">
+          <button onclick="pickWinner(${c},'LOCAL')" ${disabled}
+            style="padding:8px 4px;border-radius:8px;border:2px solid ${sel==='LOCAL'?'#1a7a4a':'#ddd'};background:${bgLocal};font-size:11px;font-weight:${sel==='LOCAL'?'800':'500'};cursor:pointer;transition:all 0.15s;">
+            ${match.local}
+          </button>
+          <div style="text-align:center;font-size:10px;color:#aaa;font-weight:700;">vs</div>
+          <button onclick="pickWinner(${c},'VISITANTE')" ${disabled}
+            style="padding:8px 4px;border-radius:8px;border:2px solid ${sel==='VISITANTE'?'#c0392b':'#ddd'};background:${bgVisit};font-size:11px;font-weight:${sel==='VISITANTE'?'800':'500'};cursor:pointer;transition:all 0.15s;">
+            ${match.visita}
+          </button>
+        </div>
+        ${resultBadge}
+      </div>`;
+    });
+
+    if(anyMatchAvailable) {
+      hB += `<span class="jornada-sep">${fase.n}</span>${faseHTML}`;
+    }
+  });
+
+  if(!hB) hB = `<div class="card" style="text-align:center;padding:20px;color:#888;"><p>Elige los ganadores de dieciseisavos para ver los siguientes cruces.</p></div>`;
+  bCont.innerHTML = hB;
+}
+
+function setPron(c,v) { 
+  if(!allData[jugador]) allData[jugador]={pron:{},elim:{},m3:{}}; 
+  allData[jugador].pron[c]=v; 
+  markDirty();
+  
+  // Update Background dynamically
+  const el = event.target;
+  if(el) el.style.background = v === 'LOCAL' ? '#e8f5ee' : v === 'EMPATE' ? '#fff8e1' : v === 'VISITANTE' ? '#fde8e8' : '#fff';
+}
+
+function pickWinner(c, val) {
+  if(!allData[jugador]) allData[jugador] = {pron:{}, elim:{}, m3:{}};
+  allData[jugador].elim[c] = val;
+  markDirty();
+  renderElim(); // re-render to show next round matches
+}
+
+function setElim(c,v) { 
+  if(!allData[jugador]) allData[jugador]={pron:{},elim:{},m3:{}}; 
+  allData[jugador].elim[c]=v; 
+  markDirty();
+  renderElim();
+}
+
+function setM3(k,v) { 
+  if(!allData[jugador]) allData[jugador]={pron:{},elim:{},m3:{}}; 
+  allData[jugador].m3[k]=v; 
+  markDirty(); 
+  renderElim(); // Rerender so they show up in bracket
+}
+
+function comprobarM3() {
+  if(!allData[jugador]?.m3) return;
+  const valuesObj = allData[jugador].m3;
+  const inputs = document.querySelectorAll('.m3-input');
+  
+  const vals = Object.values(valuesObj).filter(v => v !== "");
+  const dup = vals.filter((item, index) => vals.indexOf(item) !== index);
+  const dupUnique = [...new Set(dup)];
+  
+  const w = document.getElementById('m3-warning');
+  if(dupUnique.length > 0) {
+    w.style.display = 'block';
+    w.innerHTML = "⚠️ <strong>Error:</strong> Has repetido a: " + dupUnique.join(', ');
+  } else {
+    w.style.display = 'none';
+  }
+
+  let idx = 0;
+  M3_KEYS.forEach(k => {
+      const val = valuesObj[k] || '';
+      if(val && dupUnique.includes(val)) inputs[idx].classList.add('error');
+      else inputs[idx].classList.remove('error');
+      idx++;
+  });
+}
+
+function rellenarAleatorio() {
+  const ops = ['LOCAL', 'EMPATE', 'VISITANTE'];
+  if(!allData[jugador]) allData[jugador]={pron:{},elim:{},m3:{}};
+  Object.keys(GRUPOS).forEach(lt => {
+    GRUPOS[lt].p.forEach(p => { 
+      if(!allData[jugador].pron[p.c]) allData[jugador].pron[p.c] = ops[Math.floor(Math.random()*3)]; 
+    });
+  });
+  document.querySelector('.jornada-btn.active').click(); 
+  markDirty();
+}
+
+function renderResultados() {
+  const adminData = allData["_ADMIN_"] || {rr:{}, elim:{}};
+  const allMatchMap = {};
+  Object.keys(GRUPOS).forEach(lt => GRUPOS[lt].p.forEach(p => allMatchMap[p.c] = {l:p.l, v:p.v, g:lt}));
+
+  const rrKeys = Object.keys(adminData.rr).map(Number).sort((a,b)=>a-b);
+  const elimKeys = Object.keys(adminData.elim).map(Number).sort((a,b)=>a-b);
+
+  if(rrKeys.length === 0 && elimKeys.length === 0) {
+    document.getElementById('resultados-cont').innerHTML = `<p style="color:#888;font-size:13px;text-align:center;padding:20px 0;">Aún no hay resultados introducidos.</p>`;
+    return;
+  }
+
+  let html = '';
+
+  if(rrKeys.length > 0) {
+    html += `<p style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;margin-bottom:8px;">Fase de Grupos</p>`;
+    let curGroup = '';
+    rrKeys.forEach(c => {
+      const m = allMatchMap[c];
+      if(!m) return;
+      if(m.g !== curGroup) {
+        curGroup = m.g;
+        html += `<div class="jornada-sep">Grupo ${curGroup}</div>`;
+      }
+      const res = adminData.rr[c];
+      const badge = res === 'LOCAL' ? `<span class="res-badge res-L">L</span>` : res === 'VISITANTE' ? `<span class="res-badge res-V">V</span>` : `<span class="res-badge res-E">E</span>`;
+      const lStyle = res === 'LOCAL' ? 'color:var(--green);' : '';
+      const vStyle = res === 'VISITANTE' ? 'color:#c0392b;' : '';
+      html += `<div class="resultado-item">
+        <div class="res-num">${c}</div>
+        <div class="res-local" style="${lStyle}">${m.l}</div>
+        ${badge}
+        <div class="res-visit" style="${vStyle}">${m.v}</div>
+      </div>`;
+    });
+  }
+
+  if(elimKeys.length > 0) {
+    html += `<p style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;margin:15px 0 8px;">Eliminatorias</p>`;
+    const faseNames = {73:'Dieciseisavos',89:'Octavos de final',97:'Cuartos de final',101:'Semifinales',103:'Final'};
+    let curFase = '';
+    elimKeys.forEach(c => {
+      const faseKey = c >= 103 ? 103 : c >= 101 ? 101 : c >= 97 ? 97 : c >= 89 ? 89 : 73;
+      if(faseNames[faseKey] !== curFase) {
+        curFase = faseNames[faseKey];
+        html += `<div class="jornada-sep">${curFase}</div>`;
+      }
+      const res = adminData.elim[c];
+      const winner = res.startsWith('LOCAL') || res === 'EMPATE_L' ? 'L' : 'V';
+      const badge = winner === 'L' ? `<span class="res-badge res-L">L</span>` : `<span class="res-badge res-V">V</span>`;
+      html += `<div class="resultado-item">
+        <div class="res-num">${c}</div>
+        <div class="res-local" style="${winner==='L'?'color:var(--green);':''}">Partido #${c}</div>
+        ${badge}
+        <div class="res-visit"></div>
+      </div>`;
+    });
+  }
+
+  document.getElementById('resultados-cont').innerHTML = html;
+}
+
+function renderClasif() {
+  const adminData = allData["_ADMIN_"] || {rr:{}, elim:{}};
+  if(!adminData.rr) adminData.rr = {};
+  if(!adminData.elim) adminData.elim = {};
+
+  const excluded = ["_ADMIN_", "admin2026", "admin"];
+  const players = Object.keys(allData).filter(k => !excluded.includes(k.toLowerCase()));
+
+  if(players.length === 0) {
+    document.getElementById('clasif-cont').innerHTML = `<div class="card"><p style="text-align:center;color:#888;padding:20px;">No hay jugadores registrados aún.</p></div>`;
+    return;
+  }
+
+  // Build match lookup by jornada
+  const matchByJornada = {1:[], 2:[], 3:[]};
+  Object.keys(GRUPOS).forEach(lt => GRUPOS[lt].p.forEach(p => matchByJornada[p.j].push(p.c)));
+
+  const ranking = players.map(user => {
+    const data = allData[user];
+    let pJ1 = 0, pJ2 = 0, pJ3 = 0, pElim = 0;
+
+    if(data.pron) {
+      matchByJornada[1].forEach(c => { if(data.pron[c] && adminData.rr[c] && adminData.rr[c] === data.pron[c]) pJ1++; });
+      matchByJornada[2].forEach(c => { if(data.pron[c] && adminData.rr[c] && adminData.rr[c] === data.pron[c]) pJ2++; });
+      matchByJornada[3].forEach(c => { if(data.pron[c] && adminData.rr[c] && adminData.rr[c] === data.pron[c]) pJ3++; });
+    }
+    if(data.elim) pElim = calcElimPoints(data.elim);
+
+    const pGrupos = pJ1 + pJ2 + pJ3;
+    return { user, pJ1, pJ2, pJ3, pGrupos, pElim, total: pGrupos + pElim };
+  }).sort((a,b) => b.total - a.total);
+
+  // Podium top 3
+  const medals = ['🥇','🥈','🥉'];
+  let html = `<div class="card">`;
+  if(ranking.length >= 3) {
+    const order = [ranking[1], ranking[0], ranking[2]];
+    const classes = ['podium-2','podium-1','podium-3'];
+    html += `<div class="podium">`;
+    order.forEach((r, i) => {
+      const medal = i === 1 ? medals[0] : i === 0 ? medals[1] : medals[2];
+      const isMe = r.user === jugador;
+      html += `<div class="podium-place ${classes[i]}">
+        <div class="podium-name" style="${isMe?'color:var(--green);':''}">${isMe?'⭐ ':''}${r.user}</div>
+        <div class="podium-pts">${r.total} pts</div>
+        <div class="podium-block">${medal}</div>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  // Info line
+  const numRR = Object.keys(adminData.rr).length;
+  const numElim = Object.keys(adminData.elim).length;
+  if(numRR > 0 || numElim > 0) {
+    html += `<p style="font-size:11px;color:#888;text-align:center;margin-bottom:10px;">Basado en ${numRR} resultado${numRR!==1?'s':''} de grupos y ${numElim} de eliminatorias</p>`;
+  } else {
+    html += `<p style="font-size:11px;color:#e67e22;text-align:center;margin-bottom:10px;">⏳ Aún no hay resultados reales introducidos — todos con 0 puntos</p>`;
+  }
+
+  // Table with jornada breakdown
+  html += `<div style="overflow-x:auto;">
+  <table class="clasif-table">
+    <tr>
+      <th>#</th>
+      <th>Jugador</th>
+      <th style="background:#c0392b;font-size:10px;">J1</th>
+      <th style="background:#e67e22;font-size:10px;">J2</th>
+      <th style="background:#f39c12;font-size:10px;">J3</th>
+      <th style="background:#d35400;font-size:10px;">GRP</th>
+      <th style="background:#2980b9;font-size:10px;">ELIM</th>
+      <th style="background:#27ae60;">TOTAL</th>
+    </tr>`;
+
+  ranking.forEach((r, idx) => {
+    const rowStyle = r.user === jugador ? 'background:#e8f5ee;font-weight:bold;' : '';
+    const medal = idx < 3 ? medals[idx] + ' ' : '';
+    html += `<tr style="${rowStyle}">
+      <td>${idx+1}</td>
+      <td>${medal}${r.user}</td>
+      <td style="color:#c0392b;font-weight:600;">${r.pJ1}</td>
+      <td style="color:#e67e22;font-weight:600;">${r.pJ2}</td>
+      <td style="color:#f39c12;font-weight:600;">${r.pJ3}</td>
+      <td style="font-weight:700;">${r.pGrupos}</td>
+      <td style="font-weight:700;color:#2980b9;">${r.pElim}</td>
+      <td style="font-weight:bold;font-size:14px;">${r.total}</td>
+    </tr>`;
+  });
+
+  html += `</table></div></div>`;
+  document.getElementById('clasif-cont').innerHTML = html;
+}
+
+
+function exportarCSV() {
+  const allMatchCodes = [];
+  Object.keys(GRUPOS).forEach(lt => GRUPOS[lt].p.forEach(p => allMatchCodes.push(p.c)));
+  allMatchCodes.sort((a,b) => a-b);
+
+  let csv = "JUGADOR";
+  allMatchCodes.forEach(c => csv += `,Grupos P${c}`);
+  M3_KEYS.forEach(k => csv += `,Mejor 3º ${k}`);
+  for(let i=73; i<=104; i++) csv += `,Elimin. P${i}`;
+  csv += "\n";
+
+  Object.keys(allData).forEach(user => {
+     if(user === "_ADMIN_" || user.toLowerCase() === "admin") return;
+     csv += `"${user}"`;
+     const d = allData[user];
+     allMatchCodes.forEach(c => csv += `,"${d.pron?.[c] || ''}"`);
+     M3_KEYS.forEach(k => csv += `,"${d.m3?.[k] || ''}"`);
+     for(let i=73; i<=104; i++) csv += `,"${d.elim?.[i] || ''}"`;
+     csv += "\n";
+  });
+
+  const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csv], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "pronosticos_mundial_2026.csv";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+function renderAdmin() {
+  const adminData = allData["_ADMIN_"] || {rr:{}, elim:{}, elimMatches:{}, faseActiva:null};
+  if(!adminData.elimMatches) adminData.elimMatches = {};
+
+  let html = `<h4>Resultados Reales (Grupos)</h4>`;
+  Object.keys(GRUPOS).forEach(lt => {
+    html += `<span class="jornada-sep">Grupo ${lt}</span>`;
+    GRUPOS[lt].p.forEach(p => {
+      const val = adminData.rr[p.c] || '';
+      html += `<div class="partido" style="grid-template-columns:1fr 80px 1fr;"><div class="t-l">${p.l}</div>
+               <select onchange="setAdminRR(${p.c}, this.value)">
+                 <option value="">-</option>
+                 <option value="LOCAL" ${val==='LOCAL'?'selected':''}>L</option>
+                 <option value="EMPATE" ${val==='EMPATE'?'selected':''}>E</option>
+                 <option value="VISITANTE" ${val==='VISITANTE'?'selected':''}>V</option>
+               </select>
+               <div class="t-v">${p.v}</div></div>`;
+    });
+  });
+
+  // === NUEVA SECCIÓN: GESTIÓN ELIMINATORIAS ===
+  html += `<h4 style="margin-top:20px;">🏆 Gestión Eliminatorias</h4>`;
+
+  // Simple activate toggle
+  const faseActiva = adminData.faseActiva || '';
+  const elimActivas = !!faseActiva;
+  html += `<div style="margin-bottom:15px;padding:12px;background:${elimActivas?'#e8f5ee':'#fff8e1'};border-radius:8px;border:1px solid ${elimActivas?'#a9d9bc':'#f0d080'};">
+    <div style="display:flex;align-items:center;justify-content:space-between;">
+      <span style="font-size:13px;font-weight:700;color:${elimActivas?'#1a5c34':'#7a5c00'};">${elimActivas?'🟢 Eliminatorias ACTIVAS':'🟡 Eliminatorias INACTIVAS'}</span>
+      <button onclick="toggleElimActivas()" class="btn" style="background:${elimActivas?'#c0392b':'#1a7a4a'};padding:6px 14px;font-size:12px;">
+        ${elimActivas?'Desactivar':'Activar'}
+      </button>
+    </div>
+    <p style="font-size:11px;color:#666;margin-top:6px;">Define los 16 cruces de dieciseisavos y activa. Los usuarios verán el bracket completo y podrán pronosticar.</p>
+  </div>`;
+
+  // Cruces por fase
+  FASES_ELIM.filter(f => f.id === 'd16').forEach(fase => {
+    html += `<span class="jornada-sep">${fase.n}</span>`;
+    fase.partidos.forEach(c => {
+      const match = adminData.elimMatches[c] || {local:'', visita:''};
+      const res = adminData.elim[c] || '';
+      const info = ELIM_INFO[c] || {};
+      html += `<div style="border:1px solid #eee;border-radius:8px;padding:10px;margin-bottom:8px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+          <span style="font-size:10px;color:#999;font-weight:600;">Partido #${c}</span>
+          <span style="font-size:10px;color:#aaa;">📅 ${info.fecha} · 📍 ${info.sede}</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:6px;align-items:center;margin-bottom:8px;">
+          ${teamSelectHTML(match.local, c, 'local')}
+          <span style="font-size:11px;color:#999;font-weight:700;">vs</span>
+          ${teamSelectHTML(match.visita, c, 'visita')}
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <label style="font-size:11px;color:#666;font-weight:600;">Resultado:</label>
+          <select onchange="setAdminElim(${c}, this.value)" style="flex:1;padding:5px;border-radius:6px;border:1px solid #ccc;font-size:12px;">
+            <option value="">— Sin resultado —</option>
+            <option value="LOCAL" ${res==='LOCAL'?'selected':''}>Gana ${match.local||'Local'}</option>
+            <option value="VISITANTE" ${res==='VISITANTE'?'selected':''}>Gana ${match.visita||'Visitante'}</option>
+          </select>
+        </div>
+      </div>`;
+    });
+  });
+
+  // Resultados de rondas posteriores (octavos en adelante)
+  // Admin introduce resultados, equipos se muestran basados en resultados reales anteriores
+  if(elimActivas) {
+    const laterFases = FASES_ELIM.filter(f => f.id !== 'd16');
+    laterFases.forEach(fase => {
+      let faseHasMatches = false;
+      let faseHTML = '';
+      fase.partidos.forEach(c => {
+        const feed = BRACKET_FEED[c];
+        if(!feed) return;
+        // Get teams from admin results (not user picks)
+        const getAdminWinner = (matchNum) => {
+          const r = adminData.elim[matchNum];
+          const m = matchNum <= 88 ? adminData.elimMatches[matchNum] : null;
+          if(!r || !m) return null;
+          return r === 'LOCAL' ? m.local : m.visita;
+        };
+        const getAdminLoser = (matchNum) => {
+          const r = adminData.elim[matchNum];
+          const m = matchNum <= 88 ? adminData.elimMatches[matchNum] : null;
+          if(!r || !m) return null;
+          return r === 'LOCAL' ? m.visita : m.local;
+        };
+        // For rounds > octavos, we need recursive lookup from admin results
+        const getAdminTeam = (matchNum, loser=false) => {
+          if(matchNum <= 88) return loser ? getAdminLoser(matchNum) : getAdminWinner(matchNum);
+          const f2 = BRACKET_FEED[matchNum];
+          if(!f2) return null;
+          const r = adminData.elim[matchNum];
+          if(!r) return null;
+          const t1 = getAdminTeam(f2.e1);
+          const t2 = getAdminTeam(f2.e2);
+          if(!t1 || !t2) return null;
+          const winner = r === 'LOCAL' ? t1 : t2;
+          const loserT = r === 'LOCAL' ? t2 : t1;
+          return loser ? loserT : winner;
+        };
+
+        const local = feed.losers ? getAdminTeam(feed.e1, true) : getAdminTeam(feed.e1);
+        const visita = feed.losers ? getAdminTeam(feed.e2, true) : getAdminTeam(feed.e2);
+        if(!local || !visita) return;
+
+        faseHasMatches = true;
+        const res = adminData.elim[c] || '';
+        const info2 = ELIM_INFO[c] || {};
+        faseHTML += `<div style="border:1px solid #eee;border-radius:8px;padding:10px;margin-bottom:8px;">
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+            <span style="font-size:10px;color:#999;font-weight:600;">Partido #${c}: ${local} vs ${visita}</span>
+            <span style="font-size:10px;color:#aaa;">📅 ${info2.fecha} · 📍 ${info2.sede}</span>
+          </div>
+          <select onchange="setAdminElim(${c}, this.value)" style="width:100%;padding:6px;border-radius:6px;border:1px solid #ccc;font-size:12px;">
+            <option value="">— Sin resultado —</option>
+            <option value="LOCAL" ${res==='LOCAL'?'selected':''}>Gana ${local}</option>
+            <option value="VISITANTE" ${res==='VISITANTE'?'selected':''}>Gana ${visita}</option>
+          </select>
+        </div>`;
+      });
+      if(faseHasMatches) {
+        html += `<span class="jornada-sep">${fase.n}</span>${faseHTML}`;
+      }
+    });
+  }
+
+  document.getElementById('admin-rr').innerHTML = html;
+}
+
+function toggleElimActivas() {
+  if(!allData["_ADMIN_"]) allData["_ADMIN_"] = {rr:{}, elim:{}, elimMatches:{}, faseActiva:null};
+  const current = allData["_ADMIN_"].faseActiva;
+  allData["_ADMIN_"].faseActiva = current ? null : 'd16';
+  renderAdmin();
+  renderLockStatus();
+}
+
+function setElimMatchFromSelect(el) {
+  const c = parseInt(el.dataset.match);
+  const campo = el.dataset.campo;
+  const val = el.value;
+  setElimMatch(c, campo, val);
+}
+
+function setElimMatch(c, campo, val) {
+  if(!allData["_ADMIN_"]) allData["_ADMIN_"] = {rr:{}, elim:{}, elimMatches:{}, faseActiva:null};
+  if(!allData["_ADMIN_"].elimMatches) allData["_ADMIN_"].elimMatches = {};
+  if(!allData["_ADMIN_"].elimMatches[c]) allData["_ADMIN_"].elimMatches[c] = {local:'', visita:''};
+  allData["_ADMIN_"].elimMatches[c][campo] = val;
+}
+
+function setAdminRR(c,v) { if(!allData["_ADMIN_"]) allData["_ADMIN_"]={rr:{},elim:{},elimMatches:{}}; if(v==="") delete allData["_ADMIN_"].rr[c]; else allData["_ADMIN_"].rr[c]=v; }
+function setAdminElim(c,v) { if(!allData["_ADMIN_"]) allData["_ADMIN_"]={rr:{},elim:{},elimMatches:{}}; if(v==="") delete allData["_ADMIN_"].elim[c]; else allData["_ADMIN_"].elim[c]=v; }
+
+const ADMIN_USER = "_ADMIN_";
+const ADMIN_HASH = "f8ce7b7a6eb3c5b56863ed0645bedcfcb2b4a5a3cb0a232a562c45d36f4e323a";
+
+async function sha256(str) {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+async function entrar() {
+  const nombre = document.getElementById('inp-nombre').value.trim();
+  if(!nombre) return alert("Escribe un nombre.");
+
+  // Detectar intento de acceso admin
+  const esAdmin = nombre.toLowerCase() === "admin";
+  if(esAdmin) {
+    const pwd = prompt("Introduce la contraseña de administrador:");
+    if(!pwd) return;
+    const hash = await sha256(pwd);
+    if(hash !== ADMIN_HASH) {
+      alert("Contraseña incorrecta.");
+      return;
+    }
+    jugador = ADMIN_USER;
+  } else {
+    if(nombre === ADMIN_USER) return alert("Nombre no permitido.");
+    jugador = nombre;
+  }
+
+  document.querySelector('#setup .btn').innerText = "Conectando...";
+  try {
+    await loadAll();
+    if(!allData[jugador] && jugador !== ADMIN_USER) allData[jugador] = {pron:{}, elim:{}, m3:{}};
+    document.getElementById('hdr-player').innerText = esAdmin ? "👑 Admin" : jugador;
+    if(esAdmin) document.getElementById('nav-admin').style.display = 'block';
+    document.querySelector('.app-nav button:nth-child(2)').click();
+  } catch(e) {
+    alert("Error de conexión. Inténtalo de nuevo.");
+    document.querySelector('#setup .btn').innerText = "Entrar a la porra";
+  }
+}
+
+function toggleComparativa() {
+  const div = document.getElementById('admin-comparativa');
+  if(div.style.display === 'none') {
+    div.style.display = 'block';
+    renderComparativa();
+  } else {
+    div.style.display = 'none';
+  }
+}
+
+function renderComparativa() {
+  const adminData = allData["_ADMIN_"] || {rr:{}, elim:{}};
+  const excluded = ["_ADMIN_", "admin2026", "admin"];
+  const players = Object.keys(allData).filter(k => !excluded.includes(k.toLowerCase()));
+
+  if(players.length === 0) {
+    document.getElementById('admin-comparativa').innerHTML = '<p style="color:#888;font-size:12px;">No hay jugadores.</p>';
+    return;
+  }
+
+  // Collect all matches that have a real result
+  const allMatchMap = {};
+  Object.keys(GRUPOS).forEach(lt => GRUPOS[lt].p.forEach(p => allMatchMap[p.c] = {l:p.l, v:p.v, g:lt, j:p.j}));
+
+  const rrCodes = Object.keys(adminData.rr).map(Number).sort((a,b)=>a-b);
+  const elimCodes = Object.keys(adminData.elim).map(Number).sort((a,b)=>a-b);
+  const allCodes = [...rrCodes, ...elimCodes];
+
+  if(allCodes.length === 0) {
+    document.getElementById('admin-comparativa').innerHTML = '<p style="color:#e67e22;font-size:12px;padding:10px 0;">⏳ Introduce resultados reales para ver la comparativa.</p>';
+    return;
+  }
+
+  // Header row with player names
+  let html = `<div class="comp-wrap"><table class="comp-table"><thead><tr>
+    <th class="partido-col">Partido</th>
+    <th>Resultado</th>`;
+  players.forEach(p => { html += `<th>${p}</th>`; });
+  html += `</tr></thead><tbody>`;
+
+  let lastSection = '';
+
+  allCodes.forEach(c => {
+    const isGrupo = c <= 72;
+    const section = isGrupo ? `Jornada ${allMatchMap[c]?.j || ''}` : 
+                    c >= 103 ? 'Final' : c >= 101 ? 'Semifinales' : 
+                    c >= 97 ? 'Cuartos' : c >= 89 ? 'Octavos' : 'Dieciseisavos';
+
+    if(section !== lastSection) {
+      lastSection = section;
+      html += `<tr><td class="comp-jornada" colspan="${players.length + 2}">${section}</td></tr>`;
+    }
+
+    const realRes = isGrupo ? adminData.rr[c] : adminData.elim[c];
+    const match = allMatchMap[c];
+    const label = isGrupo ? `#${c} ${match?.l||''} vs ${match?.v||''}` : `#${c} Elim.`;
+    const resBadge = realRes === 'LOCAL' ? `<span class="res-badge res-L">L</span>` :
+                     realRes === 'VISITANTE' ? `<span class="res-badge res-V">V</span>` :
+                     realRes?.startsWith('EMPATE') ? `<span class="res-badge res-E">E</span>` :
+                     `<span class="res-badge" style="background:#eee">-</span>`;
+
+    html += `<tr><td class="partido-col">${label}</td><td>${resBadge}</td>`;
+
+    players.forEach(p => {
+      const pron = isGrupo ? allData[p]?.pron?.[c] : allData[p]?.elim?.[c];
+      if(!pron) {
+        html += `<td class="c-pend">—</td>`;
+      } else {
+        let acertó = false;
+        let short = '';
+        if(isGrupo) {
+          acertó = pron === realRes;
+          short = pron === 'LOCAL' ? 'L' : pron === 'VISITANTE' ? 'V' : 'E';
+        } else {
+          const realWinner = getRealWinnerTeamName(c);
+          const userWinner = getWinnerTeamName(pron, c);
+          acertó = !!(realWinner && userWinner && realWinner === userWinner);
+          short = userWinner ? userWinner.split(' ')[0] : (pron === 'LOCAL' ? 'L' : 'V');
+        }
+        html += `<td class="${acertó ? 'c-ok' : 'c-fail'}" title="${isGrupo?pron:(getWinnerTeamName(pron,c)||pron)}">${short}</td>`;
+      }
+    });
+
+    html += `</tr>`;
+  });
+
+  html += `</tbody></table></div>`;
+
+  // Summary row: total aciertos por jugador
+  html += `<div style="overflow-x:auto;margin-top:8px;"><table class="comp-table"><thead><tr>
+    <th class="partido-col" colspan="2">✅ Total aciertos</th>`;
+  players.forEach(p => { html += `<th>${p}</th>`; });
+  html += `</tr></thead><tbody><tr><td class="partido-col" colspan="2" style="font-weight:700;">Puntos</td>`;
+  players.forEach(p => {
+    let pts = 0;
+    rrCodes.forEach(c => { if(allData[p]?.pron?.[c] && allData[p].pron[c] === adminData.rr[c]) pts += 1; });
+    pts += calcElimPoints(allData[p]?.elim);
+    html += `<td style="font-weight:700;font-size:13px;">${pts}</td>`;
+  });
+  html += `</tr></tbody></table></div>`;
+
+  document.getElementById('admin-comparativa').innerHTML = html;
+}
+
+function cambiarJugador() {
+  if(confirm("¿Salir y cambiar de jugador? Asegúrate de haber guardado.")) location.reload();
+}
+</script>
+</body>
+</html>

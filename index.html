@@ -262,7 +262,7 @@ function getFase(c) {
 }
 
 let jugador='', allData={};
-const API_URL = 'https://script.google.com/macros/s/AKfycbwxLEBaT5WdQDlNvfoByblMZt8_US2-EuLMfKM7Uje37IPNRzDdNQp8lp58WBsBgRl1/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbzPFirssjOsTG1fnlaWq9ROYAdkQsDE3i4G8baUrFCPh90Pd-uhcz0dd8MExbs_2L_4/exec';
 
 function isLocked() {
   return allData["_ADMIN_"]?.locked === true;
@@ -492,7 +492,7 @@ function showJornada(j, btn) {
     let html = `<div class="card"><h3>Grupo ${lt}</h3>`;
     const partidos = GRUPOS[lt].p.filter(p => p.j === j);
     partidos.forEach(p => {
-       const sel = allData[jugador]?.pron[p.c] || '';
+       const sel = allData[jugador]?.pron?.[p.c] || '';
        const bg = sel === 'LOCAL' ? '#e8f5ee' : sel === 'EMPATE' ? '#fff8e1' : sel === 'VISITANTE' ? '#fde8e8' : '#fff';
        const disabled = isLocked() ? 'disabled' : '';
        html += `<div class="partido" style="grid-template-columns:28px 1fr 90px 1fr;">
@@ -1109,7 +1109,12 @@ async function entrar() {
   document.querySelector('#setup .btn').innerText = "Conectando...";
   try {
     await loadAll();
-    if(!allData[jugador] && jugador !== ADMIN_USER) allData[jugador] = {pron:{}, elim:{}, m3:{}};
+    if(jugador !== ADMIN_USER) {
+      if(!allData[jugador]) allData[jugador] = {pron:{}, elim:{}, m3:{}};
+      if(!allData[jugador].pron) allData[jugador].pron = {};
+      if(!allData[jugador].elim) allData[jugador].elim = {};
+      if(!allData[jugador].m3) allData[jugador].m3 = {};
+    }
     document.getElementById('hdr-player').innerText = esAdmin ? "👑 Admin" : jugador;
     if(esAdmin) document.getElementById('nav-admin').style.display = 'block';
     document.querySelector('.app-nav button:nth-child(2)').click();

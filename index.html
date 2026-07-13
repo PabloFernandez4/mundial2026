@@ -323,14 +323,14 @@ function getMatchTeamsForScoring(matchNum) {
   const c = parseInt(matchNum);
   // Dieciseisavos: from admin elimMatches
   if(c >= 73 && c <= 88) {
-    const m = allData["_ADMIN_"]?.elimMatches?.[c];
+    const m = allData["_ADMIN_"]?.elimMatches?.[c] || allData["_ADMIN_"]?.elimMatches?.[String(c)];
     return m?.local && m?.visita ? m : null;
   }
   // Later rounds: compute from real admin results of previous round
   const feed = BRACKET_FEED[c];
   if(!feed) return null;
   const getTeam = (mn, loser=false) => {
-    const res = allData["_ADMIN_"]?.elim?.[mn];
+    const res = allData["_ADMIN_"]?.elim?.[mn] || allData["_ADMIN_"]?.elim?.[String(mn)];
     if(!res) return null;
     const m = getMatchTeamsForScoring(mn);
     if(!m) return null;
@@ -347,13 +347,13 @@ function getMatchTeamsForScoring(matchNum) {
 function getWinnerTeamName(pick, matchNum) {
   if(!pick) return null;
   const match = getMatchTeamsForScoring(matchNum);
-  if(!match) return null;
+  if(!match) return null; // No teams known = no point, never fallback to LOCAL/VISITANTE
   return pick === 'LOCAL' ? match.local : match.visita;
 }
 
 // Get the real winner team name from admin result
 function getRealWinnerTeamName(matchNum) {
-  const res = allData["_ADMIN_"]?.elim?.[matchNum];
+  const res = allData["_ADMIN_"]?.elim?.[matchNum] || allData["_ADMIN_"]?.elim?.[String(matchNum)];
   if(!res) return null;
   const match = getMatchTeamsForScoring(matchNum);
   if(!match) return null;
@@ -362,18 +362,32 @@ function getRealWinnerTeamName(matchNum) {
 
 // Calculate elim points for a user: 1pt per correct team pick
 function calcElimPoints(userElim) {
-  let pts = 0;
-  if(!userElim) return 0;
+  return calcElimPointsByFase(userElim).total;
+}
+
+function calcElimPointsByFase(userElim) {
+  const result = {d16:0, oct:0, cua:0, sem:0, fin:0, total:0};
+  if(!userElim) return result;
+  const faseMap = {
+    d16: [73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88],
+    oct: [89,90,91,92,93,94,95,96],
+    cua: [97,98,99,100],
+    sem: [101,102],
+    fin: [103,104],
+  };
   Object.keys(userElim).forEach(c => {
     const userPick = userElim[c];
     if(!userPick) return;
     const realWinner = getRealWinnerTeamName(parseInt(c));
     if(!realWinner) return;
-    // Get user's chosen team name
     const userWinner = getWinnerTeamName(userPick, parseInt(c));
-    if(userWinner && userWinner === realWinner) pts += 1;
+    if(!userWinner || userWinner !== realWinner) return;
+    // Find which fase
+    for(const [fase, partidos] of Object.entries(faseMap)) {
+      if(partidos.includes(parseInt(c))) { result[fase]++; result.total++; break; }
+    }
   });
-  return pts;
+  return result;
 }
 
 async function loadAll(){ 
@@ -817,17 +831,19 @@ function renderClasif() {
 
   const ranking = players.map(user => {
     const data = allData[user];
-    let pJ1 = 0, pJ2 = 0, pJ3 = 0, pElim = 0;
+    let pJ1 = 0, pJ2 = 0, pJ3 = 0;
+    let elimFases = {d16:0, oct:0, cua:0, sem:0, fin:0, total:0};
 
     if(data.pron) {
       matchByJornada[1].forEach(c => { if(data.pron[c] && adminData.rr[c] && adminData.rr[c] === data.pron[c]) pJ1++; });
       matchByJornada[2].forEach(c => { if(data.pron[c] && adminData.rr[c] && adminData.rr[c] === data.pron[c]) pJ2++; });
       matchByJornada[3].forEach(c => { if(data.pron[c] && adminData.rr[c] && adminData.rr[c] === data.pron[c]) pJ3++; });
     }
-    if(data.elim) pElim = calcElimPoints(data.elim);
+    if(data.elim) elimFases = calcElimPointsByFase(data.elim);
 
     const pGrupos = pJ1 + pJ2 + pJ3;
-    return { user, pJ1, pJ2, pJ3, pGrupos, pElim, total: pGrupos + pElim };
+    const pElim = elimFases.total;
+    return { user, pJ1, pJ2, pJ3, pGrupos, elimFases, pElim, total: pGrupos + pElim };
   }).sort((a,b) => b.total - a.total);
 
   // Podium top 3
@@ -868,6 +884,11 @@ function renderClasif() {
       <th style="background:#e67e22;font-size:10px;">J2</th>
       <th style="background:#f39c12;font-size:10px;">J3</th>
       <th style="background:#d35400;font-size:10px;">GRP</th>
+      <th style="background:#1a5276;font-size:9px;">D16</th>
+      <th style="background:#1f618d;font-size:9px;">OCT</th>
+      <th style="background:#2471a3;font-size:9px;">CUA</th>
+      <th style="background:#2980b9;font-size:9px;">SEM</th>
+      <th style="background:#5dade2;font-size:9px;">FIN</th>
       <th style="background:#2980b9;font-size:10px;">ELIM</th>
       <th style="background:#27ae60;">TOTAL</th>
     </tr>`;
@@ -882,6 +903,11 @@ function renderClasif() {
       <td style="color:#e67e22;font-weight:600;">${r.pJ2}</td>
       <td style="color:#f39c12;font-weight:600;">${r.pJ3}</td>
       <td style="font-weight:700;">${r.pGrupos}</td>
+      <td style="color:#1a5276;">${r.elimFases.d16}</td>
+      <td style="color:#1f618d;">${r.elimFases.oct}</td>
+      <td style="color:#2471a3;">${r.elimFases.cua}</td>
+      <td style="color:#2980b9;">${r.elimFases.sem}</td>
+      <td style="color:#5dade2;">${r.elimFases.fin}</td>
       <td style="font-weight:700;color:#2980b9;">${r.pElim}</td>
       <td style="font-weight:bold;font-size:14px;">${r.total}</td>
     </tr>`;

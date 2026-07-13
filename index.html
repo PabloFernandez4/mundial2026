@@ -362,7 +362,31 @@ function getRealWinnerTeamName(matchNum) {
   return res === 'LOCAL' ? match.local : match.visita;
 }
 
-// Calculate elim points for a user: 1pt per correct team pick
+// Get match teams from USER's own bracket (what they had in mind)
+function getMatchTeamsFromUserBracket(matchNum, userElim) {
+  const c = parseInt(matchNum);
+  if(c >= 73 && c <= 88) {
+    const m = allData["_ADMIN_"]?.elimMatches?.[c] || allData["_ADMIN_"]?.elimMatches?.[String(c)];
+    return m?.local && m?.visita ? m : null;
+  }
+  const feed = BRACKET_FEED[c];
+  if(!feed) return null;
+  const getUserTeam = (mn, loser=false) => {
+    const pick = userElim?.[mn] || userElim?.[String(mn)];
+    if(!pick) return null;
+    const m = getMatchTeamsFromUserBracket(mn, userElim);
+    if(!m) return null;
+    const w = pick === 'LOCAL' ? m.local : m.visita;
+    const l = pick === 'LOCAL' ? m.visita : m.local;
+    return loser ? l : w;
+  };
+  const local  = feed.losers ? getUserTeam(feed.e1, true)  : getUserTeam(feed.e1);
+  const visita = feed.losers ? getUserTeam(feed.e2, true)  : getUserTeam(feed.e2);
+  if(!local || !visita) return null;
+  return {local, visita};
+}
+
+// Calculate elim points: user's intended team vs real winner
 function calcElimPoints(userElim) {
   return calcElimPointsByFase(userElim).total;
 }
@@ -378,13 +402,17 @@ function calcElimPointsByFase(userElim) {
     fin: [103,104],
   };
   Object.keys(userElim).forEach(c => {
-    const userPick = userElim[c];
-    if(!userPick) return;
+    const pick = userElim[c];
+    if(!pick) return;
+    // Real winner from admin chain
     const realWinner = getRealWinnerTeamName(parseInt(c));
     if(!realWinner) return;
-    const userWinner = getWinnerTeamName(userPick, parseInt(c));
-    if(!userWinner || userWinner !== realWinner) return;
-    // Find which fase
+    // User's intended team from their own bracket
+    const userMatch = getMatchTeamsFromUserBracket(parseInt(c), userElim);
+    if(!userMatch) return;
+    const userTeam = pick === 'LOCAL' ? userMatch.local : userMatch.visita;
+    if(!userTeam || userTeam !== realWinner) return;
+    // Find fase and add point
     for(const [fase, partidos] of Object.entries(faseMap)) {
       if(partidos.includes(parseInt(c))) { result[fase]++; result.total++; break; }
     }
@@ -1196,9 +1224,10 @@ function renderComparativa() {
           short = pron === 'LOCAL' ? 'L' : pron === 'VISITANTE' ? 'V' : 'E';
         } else {
           const realWinner = getRealWinnerTeamName(c);
-          const userWinner = getWinnerTeamName(pron, c);
-          acertó = !!(realWinner && userWinner && realWinner === userWinner);
-          short = userWinner ? userWinner.split(' ')[0] : (pron === 'LOCAL' ? 'L' : 'V');
+          const userMatch = getMatchTeamsFromUserBracket(c, allData[p]?.elim);
+          const userTeam = userMatch ? (pron === 'LOCAL' ? userMatch.local : userMatch.visita) : null;
+          acertó = !!(realWinner && userTeam && realWinner === userTeam);
+          short = userTeam ? userTeam.split(' ')[0] : (pron === 'LOCAL' ? 'L' : 'V');
         }
         html += `<td class="${acertó ? 'c-ok' : 'c-fail'}" title="${isGrupo?pron:(getWinnerTeamName(pron,c)||pron)}">${short}</td>`;
       }
@@ -1220,7 +1249,6 @@ function renderComparativa() {
     pts += calcElimPoints(allData[p]?.elim);
     html += `<td style="font-weight:700;font-size:13px;">${pts}</td>`;
   });
-  html += `</tr></tbody></table></div>`;
 
   document.getElementById('admin-comparativa').innerHTML = html;
 }

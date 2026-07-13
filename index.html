@@ -319,6 +319,7 @@ function normalizeElim(val) {
 // Get the winning team name from a match result
 // userPick: 'LOCAL' or 'VISITANTE', matchNum: 73-104
 // Get match teams for scoring — works for all rounds including computed ones
+// Get match teams for SCORING — always uses admin real results chain
 function getMatchTeamsForScoring(matchNum) {
   const c = parseInt(matchNum);
   // Dieciseisavos: from admin elimMatches
@@ -326,20 +327,21 @@ function getMatchTeamsForScoring(matchNum) {
     const m = allData["_ADMIN_"]?.elimMatches?.[c] || allData["_ADMIN_"]?.elimMatches?.[String(c)];
     return m?.local && m?.visita ? m : null;
   }
-  // Later rounds: compute from real admin results of previous round
+  // Later rounds: compute ONLY from admin real results — never from user picks
   const feed = BRACKET_FEED[c];
   if(!feed) return null;
-  const getTeam = (mn, loser=false) => {
+
+  const getAdminTeam = (mn, loser=false) => {
     const res = allData["_ADMIN_"]?.elim?.[mn] || allData["_ADMIN_"]?.elim?.[String(mn)];
     if(!res) return null;
-    const m = getMatchTeamsForScoring(mn);
+    const m = getMatchTeamsForScoring(mn); // recursive — always admin chain
     if(!m) return null;
-    const winner = res === 'LOCAL' ? m.local : m.visita;
-    const loserT = res === 'LOCAL' ? m.visita : m.local;
-    return loser ? loserT : winner;
+    return loser ? (res === 'LOCAL' ? m.visita : m.local)
+                 : (res === 'LOCAL' ? m.local  : m.visita);
   };
-  const local = feed.losers ? getTeam(feed.e1, true) : getTeam(feed.e1);
-  const visita = feed.losers ? getTeam(feed.e2, true) : getTeam(feed.e2);
+
+  const local  = feed.losers ? getAdminTeam(feed.e1, true)  : getAdminTeam(feed.e1);
+  const visita = feed.losers ? getAdminTeam(feed.e2, true)  : getAdminTeam(feed.e2);
   if(!local || !visita) return null;
   return {local, visita};
 }
@@ -1021,52 +1023,21 @@ function renderAdmin() {
       let faseHasMatches = false;
       let faseHTML = '';
       fase.partidos.forEach(c => {
-        const feed = BRACKET_FEED[c];
-        if(!feed) return;
-        // Get teams from admin results (not user picks)
-        const getAdminWinner = (matchNum) => {
-          const r = adminData.elim[matchNum];
-          const m = matchNum <= 88 ? adminData.elimMatches[matchNum] : null;
-          if(!r || !m) return null;
-          return r === 'LOCAL' ? m.local : m.visita;
-        };
-        const getAdminLoser = (matchNum) => {
-          const r = adminData.elim[matchNum];
-          const m = matchNum <= 88 ? adminData.elimMatches[matchNum] : null;
-          if(!r || !m) return null;
-          return r === 'LOCAL' ? m.visita : m.local;
-        };
-        // For rounds > octavos, we need recursive lookup from admin results
-        const getAdminTeam = (matchNum, loser=false) => {
-          if(matchNum <= 88) return loser ? getAdminLoser(matchNum) : getAdminWinner(matchNum);
-          const f2 = BRACKET_FEED[matchNum];
-          if(!f2) return null;
-          const r = adminData.elim[matchNum];
-          if(!r) return null;
-          const t1 = getAdminTeam(f2.e1);
-          const t2 = getAdminTeam(f2.e2);
-          if(!t1 || !t2) return null;
-          const winner = r === 'LOCAL' ? t1 : t2;
-          const loserT = r === 'LOCAL' ? t2 : t1;
-          return loser ? loserT : winner;
-        };
-
-        const local = feed.losers ? getAdminTeam(feed.e1, true) : getAdminTeam(feed.e1);
-        const visita = feed.losers ? getAdminTeam(feed.e2, true) : getAdminTeam(feed.e2);
-        if(!local || !visita) return;
+        const match = getMatchTeamsForScoring(c);
+        if(!match) return;
 
         faseHasMatches = true;
-        const res = adminData.elim[c] || '';
+        const res = adminData.elim[c] || adminData.elim[String(c)] || '';
         const info2 = ELIM_INFO[c] || {};
         faseHTML += `<div style="border:1px solid #eee;border-radius:8px;padding:10px;margin-bottom:8px;">
           <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
-            <span style="font-size:10px;color:#999;font-weight:600;">Partido #${c}: ${local} vs ${visita}</span>
+            <span style="font-size:10px;color:#999;font-weight:600;">Partido #${c}: ${match.local} vs ${match.visita}</span>
             <span style="font-size:10px;color:#aaa;">📅 ${info2.fecha} · 📍 ${info2.sede}</span>
           </div>
           <select onchange="setAdminElim(${c}, this.value)" style="width:100%;padding:6px;border-radius:6px;border:1px solid #ccc;font-size:12px;">
             <option value="">— Sin resultado —</option>
-            <option value="LOCAL" ${res==='LOCAL'?'selected':''}>Gana ${local}</option>
-            <option value="VISITANTE" ${res==='VISITANTE'?'selected':''}>Gana ${visita}</option>
+            <option value="LOCAL" ${res==='LOCAL'?'selected':''}>Gana ${match.local}</option>
+            <option value="VISITANTE" ${res==='VISITANTE'?'selected':''}>Gana ${match.visita}</option>
           </select>
         </div>`;
       });
